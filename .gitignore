@@ -1,0 +1,6 @@
+data/bossbase/
+__pycache__/
+*.pyc
+.venv/
+results/figures/*.png
+venv/ 
