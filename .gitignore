@@ -1,8 +1,23 @@
+# Dataset and results
 data/bossbase/
+results/figures/*.png
+
+# Python cache & virtual environments
 __pycache__/
 *.pyc
+*.py[cod]
+*$py.class
+venv/
 .venv/
-results/figures/*.png
-venv/ 
-__pycache__/ 
-*.pyc 
+env/
+.env
+
+# RSA Private Key (Keep private keys out of version control)
+keys/rsa_private.pem
+
+# Temporary experiment outputs & generated test files
+exp_tmp*/
+*.png
+*.jpg
+*.pdf
+!sample_cover.png
