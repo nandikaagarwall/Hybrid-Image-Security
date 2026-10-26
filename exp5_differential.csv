@@ -1,0 +1,10 @@
+,0
+npcr_scramble,0.00152587890625
+uaci_scramble,0.00152587890625
+npcr_aes_first_byte,99.59716796875
+uaci_aes_first_byte,33.345312978707106
+npcr_aes_last_byte,0.0244140625
+uaci_aes_last_byte,0.007515701593137255
+aes_wrongkey_bytes_differ_pct,99.61090087890625
+logistic_wrong_x0_ber,0.497161865234375
+logistic_right_x0_ber,0.0
