@@ -59,19 +59,20 @@ def _blocks(LL):
 
 
 def embed_D(bgr, modules, x0, r, step, blk=None):
+    """Every LL block carries one bit: the QR modules are repeated cyclically to fill all blocks
+    (841 modules -> 1024 blocks: 183 modules get a second copy), then the slots are scrambled."""
     global BLK
     BLK = blk or BLK
     B = bgr[..., 0].astype(float)
     LL, det = pywt.dwt2(B, "haar")
     blocks = _blocks(LL); nb = len(blocks); nbit = modules.size
-    reps = nb // nbit
-    if reps < 1:
+    if nbit > nb:
         raise ValueError(f"QR has {nbit} modules but only {nb} blocks: shorten the QR text")
-    bits = np.tile(modules.ravel(), reps)                            # repetition code
-    perm = logistic_perm(reps * nbit, x0, r)
-    slot_bits = np.empty(reps * nbit, np.uint8); slot_bits[perm] = bits   # scramble positions
+    bits = np.resize(modules.ravel(), nb)                              # cyclic repetition over all blocks
+    perm = logistic_perm(nb, x0, r)
+    slot_bits = np.empty(nb, np.uint8); slot_bits[perm] = bits         # scramble positions
     LLw = LL.copy()
-    for k, (i, j) in enumerate(blocks[:reps * nbit]):
+    for k, (i, j) in enumerate(blocks):
         U, S, Vt = np.linalg.svd(LL[i:i + BLK, j:j + BLK])
         q = np.floor(S[0] / step)
         S[0] = (q + (0.75 if slot_bits[k] else 0.25)) * step          # QIM
@@ -99,10 +100,10 @@ def extract_D(bgr, shape, x0, r, step, blk=None, prefilter=None):
     BLK = blk or BLK
     if prefilter == "median":
         bgr = cv2.medianBlur(bgr, 3)
-    nbit = shape[0] * shape[1]; reps = len(_blocks(np.zeros((256, 256)))) // nbit
-    raw = _soft_bits(bgr, reps * nbit, step)
-    perm = logistic_perm(reps * nbit, x0, r)
-    soft = raw[perm].reshape(reps, nbit).sum(0)                           # undo scramble, soft-combine repeats
+    nbit = shape[0] * shape[1]; nb = len(_blocks(np.zeros((256, 256))))
+    raw = _soft_bits(bgr, nb, step)
+    perm = logistic_perm(nb, x0, r)
+    soft = np.bincount(np.arange(nb) % nbit, weights=raw[perm], minlength=nbit)   # unscramble, combine copies
     return (soft > 0).astype(np.uint8).reshape(shape)
 
 

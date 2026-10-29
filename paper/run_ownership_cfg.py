@@ -6,7 +6,7 @@ import ownership as O
 from Crypto.Signature import pss
 from Crypto.Hash import SHA256
 
-ECC, BLKD, STEP = "H", 8, 205          # STEP chosen so mean PSNR matches Config A (~40.1 dB)
+ECC, BLKD, STEP = "H", 8, 183          # STEP chosen so mean PSNR matches Config A (~40.1 dB)
 X0_OWN, R_OWN = 0.12345, 3.9999
 owner_key = RSA.import_key(PRIV.read_bytes())
 OWNER = "NA+PP NIIT"
