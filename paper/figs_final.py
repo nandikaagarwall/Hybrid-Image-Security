@@ -77,7 +77,7 @@ for a, (im, t) in zip(ax, [(m_own, f"Watermark QR ({m_own.shape[0]}×{m_own.shap
                            (wrong, f"Extracted, x0 + 1e−10\nBER {np.mean(wrong != m_own) * 100:.1f}% · {'decodes' if O.qr_text(wrong) else 'no QR'}")]):
     a.imshow(im, cmap="gray", vmin=0, vmax=1, interpolation="nearest"); a.set_title(t, fontsize=6.8)
     a.set_xticks([]); a.set_yticks([]); a.grid(False)
-fig.tight_layout(); save(fig, "F04_scrambling_key_sensitivity")
+fig.tight_layout(); save(fig, "F08_scrambling_key_sensitivity")
 
 # F5 attack grid
 show = ["JPEG Q=70", "JPEG Q=50", "Gaussian v=0.01", "Salt&Pepper d=0.01", "Avg blur 3x3", "Centre blank 6.25%", "Scaling 0.5x->1x", "Translation 2 px"]
@@ -94,7 +94,7 @@ for j, an in enumerate(show):
     ax[2, j].set_xlabel(f"{'✓' if t else '✗'} BER {np.mean(mm != m_own)*100:.1f}%", fontsize=6.5, color="#1f1f1d" if t else "#b3261e")
 for a in ax.ravel(): a.set_xticks([]); a.set_yticks([]); a.grid(False)
 ax[0, 0].set_ylabel("attacked\n(proposed)", fontsize=7); ax[1, 0].set_ylabel(LA, fontsize=7); ax[2, 0].set_ylabel(LP, fontsize=7)
-fig.tight_layout(w_pad=0.3, h_pad=1.1); save(fig, "F05_attack_grid")
+fig.tight_layout(w_pad=0.3, h_pad=1.1); save(fig, "F04_attack_grid")
 
 # F6 decodability vs attack strength
 swA = pd.read_csv(OUT / "sweeps.csv"); swA = swA[swA.config == "A"]; swP = pd.read_csv(OUT / "final_sweeps_P.csv")
@@ -108,7 +108,7 @@ for a, (s, xl, inv) in zip(ax, [("jpeg", "JPEG quality factor", True), ("gaussia
     else: a.set_xscale("log")
 ax[0].set_ylabel("QR decodable (% of 12 images)")
 h, l = ax[0].get_legend_handles_labels(); fig.legend(h, l, ncol=2, frameon=False, loc="upper center", bbox_to_anchor=(0.5, 1.05))
-fig.tight_layout(); save(fig, "F06_robustness_vs_strength")
+fig.tight_layout(); save(fig, "F05_robustness_vs_strength")
 
 # F7 imperceptibility-robustness trade-off
 alA = pd.read_csv(OUT / "alpha_tradeoff.csv"); trP = pd.read_csv(OUT / "final_step_tradeoff_P.csv")
@@ -121,10 +121,10 @@ for a, an in zip(ax, ["JPEG Q=70", "Gaussian v=0.01", "Salt&Pepper d=0.01"]):
     a.axvline(40, color="#b9b8b2", lw=0.8, ls=":"); a.invert_xaxis(); a.set_title(an); a.set_xlabel("PSNR (dB)  ← more visible")
 ax[0].set_ylabel("QR decodable (% of 12 images)"); ax[0].set_ylim(-4, 104)
 h, l = ax[0].get_legend_handles_labels(); fig.legend(h, l, ncol=2, frameon=False, loc="upper center", bbox_to_anchor=(0.5, 1.06))
-fig.tight_layout(); save(fig, "F07_tradeoff")
+fig.tight_layout(); save(fig, "F06_tradeoff")
 
-# F8 hidden layer, F9 ownership: produced earlier from the same data
-shutil.copy(FIG / "fig08_hidden_layer.png", FINAL / "F08_hidden_layer.png"); shutil.copy(FIG / "fig08_hidden_layer.pdf", FINAL / "F08_hidden_layer.pdf")
+# F7 hidden layer, F9 ownership: produced earlier from the same data
+shutil.copy(FIG / "fig08_hidden_layer.png", FINAL / "F07_hidden_layer.png"); shutil.copy(FIG / "fig08_hidden_layer.pdf", FINAL / "F07_hidden_layer.pdf")
 shutil.copy(FIG / "fig11_ownership_attack.png", FINAL / "F09_ownership_attack.png"); shutil.copy(FIG / "fig11_ownership_attack.pdf", FINAL / "F09_ownership_attack.pdf")
 
 # F10 comparison with the base paper

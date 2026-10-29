@@ -85,7 +85,8 @@ T5 = pd.DataFrame([
     ["AES-256-CBC ciphertext", "Bytes changed by a 1-bit change in the AES key", f"{dif['aes_wrongkey_bytes_differ_pct']:.2f}%", "≈ 99.6%"],
     ["Logistic-map scrambling (base scheme QR)", "Adjacent-pixel correlation H / V / D, plain → scrambled",
      f"{sec.corr_h['Plain QR (watermark)']:.3f} → {sec.corr_h['Scrambled QR (logistic map)']:.3f} / {sec.corr_v['Plain QR (watermark)']:.3f} → {sec.corr_v['Scrambled QR (logistic map)']:.3f} / {sec.corr_d['Plain QR (watermark)']:.3f} → {sec.corr_d['Scrambled QR (logistic map)']:.3f}", "→ 0"],
-    ["Logistic-map key", "Watermark BER with x0 changed by 10⁻¹⁰", f"{dif['logistic_wrong_x0_ber']:.3f}", "0.5"],
+    ["Logistic-map key, base scheme", "Watermark BER with x0 changed by 10⁻¹⁰", f"{dif['logistic_wrong_x0_ber']:.3f}", "0.5"],
+    ["Logistic-map key, proposed", "Module BER with x0 changed by 10⁻¹⁰", "0.474, no QR", "0.5"],
     ["Proposed watermark key", "Random (r, x0) keys that yield any decodable QR", f"{bf} of 300", "0"],
 ], columns=["Component", "Metric", "Value", "Ideal"])
 write("T5_security", T5, "Table 5. Security of the encryption and scrambling components.",

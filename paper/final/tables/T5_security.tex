@@ -12,7 +12,8 @@ AES-256-CBC ciphertext & Adjacent-byte correlation H / V / D & -0.013 / 0.004 / 
 AES-256-CBC ciphertext & NPCR / UACI, 1-bit change in first byte & 99.60\% / 33.35\% & 99.61\% / 33.46\% \\
 AES-256-CBC ciphertext & Bytes changed by a 1-bit change in the AES key & 99.61\% & $\approx$ 99.6\% \\
 Logistic-map scrambling (base scheme QR) & Adjacent-pixel correlation H / V / D, plain → scrambled & 0.884 → -0.001 / 0.866 → -0.003 / 0.757 → 0.013 & → 0 \\
-Logistic-map key & Watermark BER with x0 changed by 10⁻¹⁰ & 0.497 & 0.5 \\
+Logistic-map key, base scheme & Watermark BER with x0 changed by 10⁻¹⁰ & 0.497 & 0.5 \\
+Logistic-map key, proposed & Module BER with x0 changed by 10⁻¹⁰ & 0.474, no QR & 0.5 \\
 Proposed watermark key & Random (r, x0) keys that yield any decodable QR & 0 of 300 & 0 \\
 \bottomrule
 \end{tabular}

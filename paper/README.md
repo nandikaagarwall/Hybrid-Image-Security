@@ -1,5 +1,7 @@
 # Paper results package
 
+**Final results for the paper are in `final/`** (built by `run_final.py`, `final_tables.py`, `figs_final.py`): figures F01–F10 (PNG + PDF), numbered in reading order, and Tables 2–8 in `final/tables/` (Markdown + LaTeX booktabs). They compare the base scheme (A) with the proposed system = blind block-SVD QIM watermark with RSA-signed certificate (blue) + AES-256/RSA-2048 hidden message (green). Everything below documents the exploratory runs that led there.
+
 Everything here is regenerated from the team's own code (`scripts/`, `src/`) by:
 
 ```
