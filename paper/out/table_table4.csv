@@ -1,0 +1,5 @@
+item,entropy,chi2,corr_h,corr_v,corr_d
+Plain QR (watermark),0.9951,8379814.3828,0.884,0.8663,0.7574
+Scrambled QR (logistic map),0.9951,8379814.3828,-0.0013,-0.0028,0.0129
+AES-256-CBC ciphertext (payload),7.9975,227.9141,-0.0126,0.0043,-0.011
+Plaintext payload (as bytes),3.8573,1191253.5469,0.1467,-0.1464,-0.2334

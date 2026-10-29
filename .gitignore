@@ -21,3 +21,5 @@ exp_tmp*/
 *.jpg
 *.pdf
 !sample_cover.png
+paper/keys_experiment/
+paper/__pycache__/
