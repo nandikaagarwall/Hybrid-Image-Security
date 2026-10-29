@@ -1,0 +1,110 @@
+image,test,accepted,reason
+airplane,Attacker's own certificate on our image (ambiguity attack),False,no QR in image
+airplane,"Our certificate, owner field edited",False,signature invalid
+airplane,Our parameters re-signed with attacker's key,False,QR text does not match certificate
+airplane,Owner certificate on unmarked cover,False,no QR in image
+airplane,"Owner certificate on unmarked cover, JPEG-90",False,no QR in image
+airplane,Legitimate owner on marked image,True,accepted
+airplane,Overwrite attack: owner claim on re-marked image,False,
+airplane,Overwrite attack: attacker claim on re-marked image,True,
+airplane,Overwrite attack: PSNR of re-marked vs cover (dB),,39.63
+einstein,Attacker's own certificate on our image (ambiguity attack),False,no QR in image
+einstein,"Our certificate, owner field edited",False,signature invalid
+einstein,Our parameters re-signed with attacker's key,False,QR text does not match certificate
+einstein,Owner certificate on unmarked cover,False,no QR in image
+einstein,"Owner certificate on unmarked cover, JPEG-90",False,no QR in image
+einstein,Legitimate owner on marked image,True,accepted
+einstein,Overwrite attack: owner claim on re-marked image,False,
+einstein,Overwrite attack: attacker claim on re-marked image,True,
+einstein,Overwrite attack: PSNR of re-marked vs cover (dB),,39.69
+girl,Attacker's own certificate on our image (ambiguity attack),False,no QR in image
+girl,"Our certificate, owner field edited",False,signature invalid
+girl,Our parameters re-signed with attacker's key,False,QR text does not match certificate
+girl,Owner certificate on unmarked cover,False,no QR in image
+girl,"Owner certificate on unmarked cover, JPEG-90",False,no QR in image
+girl,Legitimate owner on marked image,True,accepted
+girl,Overwrite attack: owner claim on re-marked image,False,
+girl,Overwrite attack: attacker claim on re-marked image,True,
+girl,Overwrite attack: PSNR of re-marked vs cover (dB),,40.05
+house,Attacker's own certificate on our image (ambiguity attack),False,no QR in image
+house,"Our certificate, owner field edited",False,signature invalid
+house,Our parameters re-signed with attacker's key,False,QR text does not match certificate
+house,Owner certificate on unmarked cover,False,no QR in image
+house,"Owner certificate on unmarked cover, JPEG-90",False,no QR in image
+house,Legitimate owner on marked image,True,accepted
+house,Overwrite attack: owner claim on re-marked image,False,
+house,Overwrite attack: attacker claim on re-marked image,True,
+house,Overwrite attack: PSNR of re-marked vs cover (dB),,40.69
+house2,Attacker's own certificate on our image (ambiguity attack),False,no QR in image
+house2,"Our certificate, owner field edited",False,signature invalid
+house2,Our parameters re-signed with attacker's key,False,QR text does not match certificate
+house2,Owner certificate on unmarked cover,False,no QR in image
+house2,"Owner certificate on unmarked cover, JPEG-90",False,no QR in image
+house2,Legitimate owner on marked image,True,accepted
+house2,Overwrite attack: owner claim on re-marked image,False,
+house2,Overwrite attack: attacker claim on re-marked image,True,
+house2,Overwrite attack: PSNR of re-marked vs cover (dB),,40.00
+lake,Attacker's own certificate on our image (ambiguity attack),False,no QR in image
+lake,"Our certificate, owner field edited",False,signature invalid
+lake,Our parameters re-signed with attacker's key,False,QR text does not match certificate
+lake,Owner certificate on unmarked cover,False,no QR in image
+lake,"Owner certificate on unmarked cover, JPEG-90",False,no QR in image
+lake,Legitimate owner on marked image,True,accepted
+lake,Overwrite attack: owner claim on re-marked image,False,
+lake,Overwrite attack: attacker claim on re-marked image,True,
+lake,Overwrite attack: PSNR of re-marked vs cover (dB),,40.14
+lena,Attacker's own certificate on our image (ambiguity attack),False,no QR in image
+lena,"Our certificate, owner field edited",False,signature invalid
+lena,Our parameters re-signed with attacker's key,False,QR text does not match certificate
+lena,Owner certificate on unmarked cover,False,no QR in image
+lena,"Owner certificate on unmarked cover, JPEG-90",False,no QR in image
+lena,Legitimate owner on marked image,True,accepted
+lena,Overwrite attack: owner claim on re-marked image,False,
+lena,Overwrite attack: attacker claim on re-marked image,True,
+lena,Overwrite attack: PSNR of re-marked vs cover (dB),,39.68
+mandrill,Attacker's own certificate on our image (ambiguity attack),False,no QR in image
+mandrill,"Our certificate, owner field edited",False,signature invalid
+mandrill,Our parameters re-signed with attacker's key,False,QR text does not match certificate
+mandrill,Owner certificate on unmarked cover,False,no QR in image
+mandrill,"Owner certificate on unmarked cover, JPEG-90",False,no QR in image
+mandrill,Legitimate owner on marked image,True,accepted
+mandrill,Overwrite attack: owner claim on re-marked image,False,
+mandrill,Overwrite attack: attacker claim on re-marked image,True,
+mandrill,Overwrite attack: PSNR of re-marked vs cover (dB),,39.92
+monalisa,Attacker's own certificate on our image (ambiguity attack),False,no QR in image
+monalisa,"Our certificate, owner field edited",False,signature invalid
+monalisa,Our parameters re-signed with attacker's key,False,QR text does not match certificate
+monalisa,Owner certificate on unmarked cover,False,no QR in image
+monalisa,"Owner certificate on unmarked cover, JPEG-90",False,no QR in image
+monalisa,Legitimate owner on marked image,True,accepted
+monalisa,Overwrite attack: owner claim on re-marked image,False,
+monalisa,Overwrite attack: attacker claim on re-marked image,True,
+monalisa,Overwrite attack: PSNR of re-marked vs cover (dB),,39.68
+boat,Attacker's own certificate on our image (ambiguity attack),False,no QR in image
+boat,"Our certificate, owner field edited",False,signature invalid
+boat,Our parameters re-signed with attacker's key,False,QR text does not match certificate
+boat,Owner certificate on unmarked cover,False,no QR in image
+boat,"Owner certificate on unmarked cover, JPEG-90",False,no QR in image
+boat,Legitimate owner on marked image,True,accepted
+boat,Overwrite attack: owner claim on re-marked image,False,
+boat,Overwrite attack: attacker claim on re-marked image,True,
+boat,Overwrite attack: PSNR of re-marked vs cover (dB),,39.88
+peppers,Attacker's own certificate on our image (ambiguity attack),False,no QR in image
+peppers,"Our certificate, owner field edited",False,signature invalid
+peppers,Our parameters re-signed with attacker's key,False,QR text does not match certificate
+peppers,Owner certificate on unmarked cover,False,no QR in image
+peppers,"Owner certificate on unmarked cover, JPEG-90",False,no QR in image
+peppers,Legitimate owner on marked image,True,accepted
+peppers,Overwrite attack: owner claim on re-marked image,False,
+peppers,Overwrite attack: attacker claim on re-marked image,True,
+peppers,Overwrite attack: PSNR of re-marked vs cover (dB),,39.95
+tree,Attacker's own certificate on our image (ambiguity attack),False,no QR in image
+tree,"Our certificate, owner field edited",False,signature invalid
+tree,Our parameters re-signed with attacker's key,False,QR text does not match certificate
+tree,Owner certificate on unmarked cover,False,no QR in image
+tree,"Owner certificate on unmarked cover, JPEG-90",False,no QR in image
+tree,Legitimate owner on marked image,True,accepted
+tree,Overwrite attack: owner claim on re-marked image,False,
+tree,Overwrite attack: attacker claim on re-marked image,True,
+tree,Overwrite attack: PSNR of re-marked vs cover (dB),,40.24
+peppers,Random logistic keys that yield ANY decodable QR (of 2000),,0

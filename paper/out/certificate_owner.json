@@ -1,0 +1,16 @@
+{
+  "body": {
+    "owner": "NA+PP NIIT",
+    "pk_fingerprint": "12fa2503",
+    "x0": 0.12345,
+    "r": 3.9999,
+    "step": 205,
+    "block": 8,
+    "qr_shape": [
+      29,
+      29
+    ],
+    "scheme": "D-blockSVD-QIM-v1"
+  },
+  "signature": "90c11d39013cdab754d8309fd849e14e3606d61ee51c44cc55f7727ec24160cb16858340bdee44c0f83343b583379d82eaa355b672d33876f967a058ed7536cdc50186763f4536d660a8dff7c06641289fd9fd8b2d3cd7b73416e3124c332f257a7f5dbf4e266d8baf75a25ae64c58e5e0d03659378e6647b3cff2cbf45a48a5cb09eb58274b4256d54ccae39a35efc614e93875bf39db3260d75b76ae9006a515d990935fc637b4ca7bca5e4d518f3f0be849d46cf7887c8d126cc8a8bedc67ea5e8011230b8eff25236e6bc75b923e43c0a3449f2a85b281642359ac6da2dc874dee5455aabcc6231c53ffb2847c028e1a02e677ca7b057bd103fd2c6d233f"
+}
