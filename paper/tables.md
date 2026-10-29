@@ -90,7 +90,7 @@ Python, single thread, cloud container; includes key/file I/O.
 | Overwrite attack: attacker claim on re-marked image        | 12/12      |                                    |
 | Config A, same ambiguity attack (attacker's own U, V)      | 12/12      | attacker's QR decodes              |
 
-Overwrite attack: PSNR of re-marked vs cover (dB): mean 39.96; Random logistic keys that yield ANY decodable QR (of 300, full decoder incl. shift search): 0
+Overwrite attack: PSNR of re-marked vs cover (dB): mean 40.16; Random logistic keys that yield ANY decodable QR (of 300, full decoder incl. shift search): 0
 
 
 ## Table 7: Robustness, Config A vs Config D at equal PSNR
@@ -99,14 +99,14 @@ Overwrite attack: PSNR of re-marked vs cover (dB): mean 39.96; Random logistic k
 |:-------------------|:------------|:------------|-----------------:|
 | JPEG Q=90          | 12/12       | 12/12       |              0   |
 | JPEG Q=70          | 8/12        | 12/12       |              0.2 |
-| JPEG Q=50          | 8/12        | 12/12       |              0.8 |
+| JPEG Q=50          | 8/12        | 12/12       |              0.9 |
 | Gaussian v=0.001   | 12/12       | 12/12       |              0   |
-| Gaussian v=0.01    | 12/12       | 3/12        |              6.9 |
-| Salt&Pepper d=0.01 | 12/12       | 10/12       |              4.7 |
-| Avg blur 3x3       | 1/12        | 12/12       |              0.4 |
-| Centre blank 6.25% | 0/12        | 8/12        |              3.7 |
-| Scaling 0.5x->1x   | 2/12        | 12/12       |              0.2 |
-| Rotation 2 deg     | 0/12        | 0/12        |             39.9 |
-| Translation 2 px   | 12/12       | 12/12       |              0.5 |
+| Gaussian v=0.01    | 12/12       | 0/12        |              8.7 |
+| Salt&Pepper d=0.01 | 12/12       | 9/12        |              7.9 |
+| Avg blur 3x3       | 1/12        | 11/12       |              0.6 |
+| Centre blank 6.25% | 0/12        | 12/12       |              2.2 |
+| Scaling 0.5x->1x   | 2/12        | 11/12       |              0.3 |
+| Rotation 2 deg     | 0/12        | 0/12        |             41.4 |
+| Translation 2 px   | 12/12       | 12/12       |              1.3 |
 
-Mean PSNR: A 40.12 dB, D 40.00 dB; SSIM D 0.9906.
+Mean PSNR: A 40.12 dB, D 40.21 dB; SSIM D 0.9907.

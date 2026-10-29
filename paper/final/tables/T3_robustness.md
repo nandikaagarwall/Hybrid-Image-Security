@@ -1,0 +1,18 @@
+**Table 3. Robustness of the watermark and the hidden message under attack (12 images; bold = more images decoded).**
+
+| Attack             | Attacked PSNR (dB)   | A: QR decodes   |   A: BER % |   A: NCC | Proposed: QR decodes   |   Proposed: BER % |   Proposed: NCC | Proposed: ownership verified   | Hidden message recovered   |
+|:-------------------|:---------------------|:----------------|-----------:|---------:|:-----------------------|------------------:|----------------:|:-------------------------------|:---------------------------|
+| No attack          | –                    | 12/12           |        0   |    1     | 12/12                  |               0   |           1     | 12/12                          | 12/12                      |
+| JPEG Q=90          | 33.62                | 12/12           |        5.5 |    0.947 | 12/12                  |               0   |           1     | 12/12                          | 0/12                       |
+| JPEG Q=70          | 31.72                | 8/12            |       14.4 |    0.901 | **12/12**              |               0.2 |           0.997 | 12/12                          | 0/12                       |
+| JPEG Q=50          | 30.68                | 8/12            |       16.1 |    0.886 | **12/12**              |               0.9 |           0.991 | 12/12                          | 0/12                       |
+| Gaussian v=0.001   | 29.62                | 12/12           |        0   |    0.998 | 12/12                  |               0   |           1     | 12/12                          | 0/12                       |
+| Gaussian v=0.01    | 20.20                | **12/12**       |        1.4 |    0.989 | 0/12                   |               8.7 |           0.908 | 0/12                           | 0/12                       |
+| Salt&Pepper d=0.01 | 20.35                | **12/12**       |        3   |    0.979 | 9/12                   |               7.9 |           0.918 | 9/12                           | 0/12                       |
+| Avg blur 3x3       | 30.62                | 1/12            |       52.4 |    0.608 | **11/12**              |               0.6 |           0.993 | 11/12                          | 0/12                       |
+| Centre blank 6.25% | 16.99                | 0/12            |       42.5 |    0.559 | **12/12**              |               2.2 |           0.977 | 12/12                          | 4/12                       |
+| Scaling 0.5x->1x   | 30.24                | 2/12            |       53.7 |    0.604 | **11/12**              |               0.3 |           0.996 | 11/12                          | 0/12                       |
+| Rotation 2 deg     | 17.43                | 0/12            |       28.9 |    0.782 | 0/12                   |              41.4 |           0.568 | 0/12                           | 0/12                       |
+| Translation 2 px   | 19.60                | 12/12           |        0.1 |    0.999 | 12/12                  |               1.3 |           0.987 | 12/12                          | 0/12                       |
+
+BER for A is over QR pixels (256 × 256), for the proposed scheme over QR modules (29 × 29). NCC as defined in the base paper; an image that was never watermarked scores 0.43 with A's extractor. Ownership verified = certificate signature valid and extracted QR equals the certified text.

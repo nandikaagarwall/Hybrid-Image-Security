@@ -65,9 +65,9 @@ for i, (dn, (dy, dx)) in enumerate({"Horizontal": (0, 1), "Vertical": (1, 0), "D
 fig.tight_layout(w_pad=0.6, h_pad=0.6); save(fig, "F03_pixel_correlation")
 
 # F4 scrambling + key sensitivity (proposed)
-nb = 1024; reps = nb // m_own.size; nslot = reps * m_own.size
-perm = O.logistic_perm(nslot, X0_OWN, R_OWN)
-slot = np.full(nb, 0.5); sb = np.empty(nslot); sb[perm] = np.tile(m_own.ravel(), reps); slot[:nslot] = sb
+nb = 1024
+perm = O.logistic_perm(nb, X0_OWN, R_OWN)
+slot = np.empty(nb); slot[perm] = np.resize(m_own.ravel(), nb)
 right = O.extract_D(P, m_own.shape, X0_OWN, R_OWN, STEP, BLKD)
 wrong = O.extract_D(P, m_own.shape, X0_OWN + 1e-10, R_OWN, STEP, BLKD)
 fig, ax = plt.subplots(1, 4, figsize=(7.2, 2.4))

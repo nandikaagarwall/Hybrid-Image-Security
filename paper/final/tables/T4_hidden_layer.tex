@@ -1,0 +1,17 @@
+\begin{table}[t]
+\centering
+\small
+\caption{Hidden-layer capacity and detectability (texture-ranked LSB vs random LSB).}
+\begin{tabular}{lcccccccc}
+\toprule
+Payload (bpp) & Bits & Green PSNR (dB) & RGB PSNR (dB) & Message recovered & RS estimate: ours & RS estimate: random LSB & P_E: ours & P_E: random LSB \\
+\midrule
+0.05 & 13,107 & 64.15 & 68.93 & 11/11 & \textbf{0.034} & 0.061 & – & – \\
+0.10 & 26,214 & 61.13 & 65.90 & 11/11 & \textbf{0.049} & 0.112 & \textbf{0.397} & 0.348 \\
+0.20 & 52,428 & 58.13 & 62.90 & 11/11 & \textbf{0.083} & 0.209 & \textbf{0.374} & 0.336 \\
+0.30 & 78,643 & 56.38 & 61.15 & 11/11 & \textbf{0.130} & 0.305 & – & – \\
+0.40 & 104,857 & 55.12 & 59.89 & 11/11 & \textbf{0.199} & 0.404 & \textbf{0.338} & 0.299 \\
+\bottomrule
+\end{tabular}
+\\[2pt]\footnotesize RS estimate = embedding rate inferred by RS steganalysis (closer to the true payload = easier to detect; on covers: 0.022). P_E = detection error of a SPAM-686 + random-forest detector (0.5 = undetectable; preliminary, 494 patches). Actual message: 340 bytes = 2,720 bits; padded with random bits to the stated payload.
+\end{table}
