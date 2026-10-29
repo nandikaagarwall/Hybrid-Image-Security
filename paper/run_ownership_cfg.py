@@ -12,7 +12,11 @@ owner_key = RSA.import_key(PRIV.read_bytes())
 OWNER = "NA+PP NIIT"
 m_own = O.qr_modules(O.owner_qr_text(OWNER, owner_key.publickey()), ECC)
 cert_own = O.make_certificate(owner_key, OWNER, X0_OWN, R_OWN, STEP, m_own.shape, BLKD)
-(OUT / "certificate_owner.json").write_text(json.dumps(cert_own, indent=2))
+_cf = OUT / "certificate_owner.json"            # RSA-PSS signatures are randomised: keep the first one
+if _cf.exists() and json.loads(_cf.read_text())["body"] == cert_own["body"]:
+    cert_own = json.loads(_cf.read_text())
+else:
+    _cf.write_text(json.dumps(cert_own, indent=2))
 
 ATK_KEY = KEYDIR / "attacker_private.pem"            # simulated attacker, fixed for reproducibility
 if not ATK_KEY.exists():
