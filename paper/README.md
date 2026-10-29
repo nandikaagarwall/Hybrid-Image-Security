@@ -6,7 +6,7 @@ Everything here is regenerated from the team's own code (`scripts/`, `src/`) by:
 cd paper
 python3 run_experiments.py      # robustness, sweeps, alpha trade-off  -> out/*.csv  (~10 min)
 python3 run_steganalysis.py     # RS + chi-square on the green channel -> out/steganalysis_rs_chi2.csv
-python3 figs_images.py; python3 figs_attacks.py; python3 figs_charts.py; python3 figs_compare_tables.py
+python3 figs_images.py; python3 figs_attacks.py; python3 figs_charts.py; python3 figs_compare_tables.py; python3 figs_correlation.py
 ```
 Showcase image: Peppers (IEEE no longer accepts Lena). RSA keys for the runs are a fresh pair in `keys_experiment/` (do not commit the private key).
 
@@ -22,6 +22,7 @@ Showcase image: Peppers (IEEE no longer accepts Lena). RSA keys for the runs are
 | fig06_ber_vs_attack_strength | Watermark BER vs attack strength (mean ± SD over 12 images). |
 | fig07_alpha_tradeoff | Effect of global α: PSNR vs BER, and fraction of images whose QR still decodes. |
 | fig08_hidden_layer | Hidden layer: green PSNR vs payload; RS steganalysis estimate vs true payload; SPAM detector error (preliminary). |
+| fig10_adjacent_pixel_correlation | Adjacent-pixel correlation (horizontal, vertical, diagonal) of the embedded channels, cover vs Config C (Peppers). Scatter: 3,000 random pixel pairs at the same positions in every panel; r computed over all pixel pairs. |
 | fig09_comparison_base_paper | NCC reported by the base paper vs our reproduction (A), adaptive (B) and combined (C); bottom: BER, which the base paper does not report. Red line: NCC obtained from an image that was never watermarked. |
 
 Tables: `tables.md` (and `out/table_*.csv`).
