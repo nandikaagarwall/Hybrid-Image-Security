@@ -18,7 +18,7 @@ for name in IMAGES:
     acc, why = O.verify_claim(D, cert_atk, attacker_key.publickey())
     sec.append(dict(image=lab, test="Attacker's own certificate on our image (ambiguity attack)", accepted=acc, reason=why))
     # 2. forged certificate: our certificate with owner name changed, our signature kept
-    f = copy.deepcopy(cert_own); f["body"]["owner"] = "Attacker Inc"
+    f = copy.deepcopy(cert_own); f["body"]["owner"] = "XY+ZW ACME"
     acc, why = O.verify_claim(D, f, attacker_key.publickey())
     sec.append(dict(image=lab, test="Our certificate, owner field edited", accepted=acc, reason=why))
     # 3. copied parameters: attacker re-signs OUR parameters with THEIR key
@@ -47,10 +47,11 @@ for name in IMAGES:
 rng = np.random.default_rng(1)
 D = O.embed_D(load("peppers"), m_own, X0_OWN, R_OWN, STEP, BLKD)
 hits = 0
-for _ in range(2000):
+N_KEYS = 300                     # each key is tried with the full decoder (2 filters x 81 shifts)
+for _ in range(N_KEYS):
     t, _ = O.extract_and_decode(D, m_own.shape, float(rng.uniform(0.01, 0.99)), float(rng.uniform(3.57, 4.0)), STEP, BLKD)
     hits += t is not None
-sec.append(dict(image="peppers", test="Random logistic keys that yield ANY decodable QR (of 2000)", accepted=None, reason=str(hits)))
+sec.append(dict(image="peppers", test=f"Random logistic keys that yield ANY decodable QR (of {N_KEYS}, full decoder incl. shift search)", accepted=None, reason=str(hits)))
 pd.DataFrame(rob).to_csv(OUT / "robustness_D.csv", index=False)
 pd.DataFrame(sec).to_csv(OUT / "ownership_tests.csv", index=False)
 print("done")

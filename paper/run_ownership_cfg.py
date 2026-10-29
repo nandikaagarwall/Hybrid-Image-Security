@@ -19,8 +19,8 @@ if not ATK_KEY.exists():
     ATK_KEY.write_bytes(RSA.generate(2048).export_key())
 attacker_key = RSA.import_key(ATK_KEY.read_bytes())
 X0_ATK, R_ATK = 0.67891, 3.9871
-m_atk = O.qr_modules(O.owner_qr_text("Attacker Inc", attacker_key.publickey()), ECC)
-body_a = dict(owner="Attacker Inc", pk_fingerprint=O.fingerprint(attacker_key.publickey()), x0=X0_ATK, r=R_ATK,
+m_atk = O.qr_modules(O.owner_qr_text("XY+ZW ACME", attacker_key.publickey()), ECC)
+body_a = dict(owner="XY+ZW ACME", pk_fingerprint=O.fingerprint(attacker_key.publickey()), x0=X0_ATK, r=R_ATK,
               step=STEP, block=BLKD, qr_shape=list(m_atk.shape), scheme="D-blockSVD-QIM-v1")
 cert_atk = dict(body=body_a, signature=pss.new(attacker_key).sign(SHA256.new(json.dumps(body_a, sort_keys=True).encode())).hex())
 

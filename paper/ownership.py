@@ -65,6 +65,8 @@ def embed_D(bgr, modules, x0, r, step, blk=None):
     LL, det = pywt.dwt2(B, "haar")
     blocks = _blocks(LL); nb = len(blocks); nbit = modules.size
     reps = nb // nbit
+    if reps < 1:
+        raise ValueError(f"QR has {nbit} modules but only {nb} blocks: shorten the QR text")
     bits = np.tile(modules.ravel(), reps)                            # repetition code
     perm = logistic_perm(reps * nbit, x0, r)
     slot_bits = np.empty(reps * nbit, np.uint8); slot_bits[perm] = bits   # scramble positions
@@ -104,13 +106,27 @@ def extract_D(bgr, shape, x0, r, step, blk=None, prefilter=None):
     return (soft > 0).astype(np.uint8).reshape(shape)
 
 
-def extract_and_decode(bgr, shape, x0, r, step, blk=None):
-    """Decoder tries the plain image, then a 3x3 median-filtered copy (removes impulse noise)."""
-    for pf in (None, "median"):
-        m = extract_D(bgr, shape, x0, r, step, blk, pf)
-        t = qr_text(m)
-        if t is not None:
-            return t, m
+def _unshift(bgr, dy, dx):
+    """Undo a translation by (dy, dx) pixels (edge-replicated)."""
+    if dy == 0 and dx == 0:
+        return bgr
+    M = np.float32([[1, 0, -dx], [0, 1, -dy]])
+    return cv2.warpAffine(bgr, M, (bgr.shape[1], bgr.shape[0]), borderMode=cv2.BORDER_REPLICATE)
+
+
+SHIFTS = sorted(((dy, dx) for dy in range(-4, 5) for dx in range(-4, 5)), key=lambda t: abs(t[0]) + abs(t[1]))
+
+
+def extract_and_decode(bgr, shape, x0, r, step, blk=None, search_shift=True):
+    """Decoder: plain image, then a 3x3 median-filtered copy (impulse noise); if neither
+    decodes, re-synchronise the block grid by trying shifts of up to 4 px."""
+    for dy, dx in (SHIFTS if search_shift else [(0, 0)]):
+        im = _unshift(bgr, dy, dx)
+        for pf in (None, "median"):
+            m = extract_D(im, shape, x0, r, step, blk, pf)
+            t = qr_text(m)
+            if t is not None:
+                return t, m
     return None, extract_D(bgr, shape, x0, r, step, blk)
 
 
