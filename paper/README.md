@@ -23,9 +23,18 @@ Showcase image: Peppers (IEEE no longer accepts Lena). RSA keys for the runs are
 | fig07_alpha_tradeoff | Effect of global α: PSNR vs BER, and fraction of images whose QR still decodes. |
 | fig08_hidden_layer | Hidden layer: green PSNR vs payload; RS steganalysis estimate vs true payload; SPAM detector error (preliminary). |
 | fig10_adjacent_pixel_correlation | Adjacent-pixel correlation (horizontal, vertical, diagonal) of the embedded channels, cover vs Config C (Peppers). Scatter: 3,000 random pixel pairs at the same positions in every panel; r computed over all pixel pairs. |
+| fig11_ownership_attack | False-ownership (ambiguity) attack. Top: Config A; an attacker's own U, V keys extract the attacker's QR from the owner's image. Bottom: Config D; extraction is blind, and the attacker's own signed certificate yields no QR, so the claim is rejected. |
+| fig12_robustness_A_vs_D | Images (of 12) whose QR still decodes after each attack, Config A vs Config D at equal PSNR (~40 dB). |
 | fig09_comparison_base_paper | NCC reported by the base paper vs our reproduction (A), adaptive (B) and combined (C); bottom: BER, which the base paper does not report. Red line: NCC obtained from an image that was never watermarked. |
 
 Tables: `tables.md` (and `out/table_*.csv`).
+
+## Config D: fixing the false-ownership flaw
+`ownership.py`, `run_ownership_cfg.py`, `run_ownership.py`, `figs_ownership.py`.
+- Embedding: each QR module bit sets the largest singular value of an 8x8 block of the blue LL band by QIM (step 205, chosen to match A's PSNR). Bit order scrambled with the logistic map (r, x0). QR = owner text + first 8 hex of SHA-256(owner RSA public key), error correction H.
+- Extraction is blind (no cover, no U/V). Decoder: plain, 3x3 median, then grid re-synchronisation over shifts of up to 4 px.
+- Certificate: {owner, key fingerprint, r, x0, step, block, QR size} signed with RSA-PSS/SHA-256. A claim is accepted only if the signature verifies, the key fingerprint matches, and the QR extracted with the certified parameters decodes to the certified text.
+- Results: Tables 6 and 7 in tables.md. Ambiguity attack: A 12/12 succeed, D 0/12. Remaining limitations: an attacker who re-embeds their own Config D mark overwrites the owner's (needs a trusted timestamp on the certificate, e.g. RFC 3161); D is weaker than A under heavy Gaussian noise (v = 0.01: 3/12 vs 12/12); neither survives 2-degree rotation.
 
 ## Things to state honestly in the paper
 - The "crop" attack blanks the central 1/4 × 1/4 of the image = 6.25% of the area, not 25%.

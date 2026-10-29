@@ -75,3 +75,38 @@ Differential/key tests: npcr_scramble = 0.0015; uaci_scramble = 0.0015; npcr_aes
 | C        |       0.362 |         0.127 |
 
 Python, single thread, cloud container; includes key/file I/O.
+
+## Table 6: Ownership-claim tests (Config D)
+
+| test                                                       | accepted   | reason                             |
+|:-----------------------------------------------------------|:-----------|:-----------------------------------|
+| Attacker's own certificate on our image (ambiguity attack) | 0/12       | no QR in image                     |
+| Our certificate, owner field edited                        | 0/12       | signature invalid                  |
+| Our parameters re-signed with attacker's key               | 0/12       | QR text does not match certificate |
+| Owner certificate on unmarked cover                        | 0/12       | no QR in image                     |
+| Owner certificate on unmarked cover, JPEG-90               | 0/12       | no QR in image                     |
+| Legitimate owner on marked image                           | 12/12      | accepted                           |
+| Overwrite attack: owner claim on re-marked image           | 0/12       |                                    |
+| Overwrite attack: attacker claim on re-marked image        | 12/12      |                                    |
+| Config A, same ambiguity attack (attacker's own U, V)      | 12/12      | attacker's QR decodes              |
+
+Overwrite attack: PSNR of re-marked vs cover (dB): mean 39.96; Random logistic keys that yield ANY decodable QR (of 300, full decoder incl. shift search): 0
+
+
+## Table 7: Robustness, Config A vs Config D at equal PSNR
+
+| Attack             | A decodes   | D decodes   |   D module BER % |
+|:-------------------|:------------|:------------|-----------------:|
+| JPEG Q=90          | 12/12       | 12/12       |              0   |
+| JPEG Q=70          | 8/12        | 12/12       |              0.2 |
+| JPEG Q=50          | 8/12        | 12/12       |              0.8 |
+| Gaussian v=0.001   | 12/12       | 12/12       |              0   |
+| Gaussian v=0.01    | 12/12       | 3/12        |              6.9 |
+| Salt&Pepper d=0.01 | 12/12       | 10/12       |              4.7 |
+| Avg blur 3x3       | 1/12        | 12/12       |              0.4 |
+| Centre blank 6.25% | 0/12        | 8/12        |              3.7 |
+| Scaling 0.5x->1x   | 2/12        | 12/12       |              0.2 |
+| Rotation 2 deg     | 0/12        | 0/12        |             39.9 |
+| Translation 2 px   | 12/12       | 12/12       |              0.5 |
+
+Mean PSNR: A 40.12 dB, D 40.00 dB; SSIM D 0.9906.

@@ -107,4 +107,4 @@ tree,Legitimate owner on marked image,True,accepted
 tree,Overwrite attack: owner claim on re-marked image,False,
 tree,Overwrite attack: attacker claim on re-marked image,True,
 tree,Overwrite attack: PSNR of re-marked vs cover (dB),,40.24
-peppers,Random logistic keys that yield ANY decodable QR (of 2000),,0
+peppers,"Random logistic keys that yield ANY decodable QR (of 300, full decoder incl. shift search)",,0

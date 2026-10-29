@@ -50,3 +50,24 @@ ax.set_ylabel("images whose QR decodes (of 12)"); ax.set_ylim(0, 13.5)
 ax.legend(frameon=False, ncol=2, loc="lower left", bbox_to_anchor=(0, 1.0), fontsize=7)
 fig.tight_layout(); save(fig, "fig12_robustness_A_vs_D")
 print("ok")
+
+# --- tables ---
+sec = pd.read_csv(OUT / "ownership_tests.csv")
+t6 = sec[sec.accepted.notna()].groupby("test", sort=False).agg(
+    accepted=("accepted", lambda x: f"{int((x == True).sum())}/{len(x)}"),
+    reason=("reason", lambda x: ", ".join(sorted({str(v) for v in x if str(v) != "nan"})))).reset_index()
+fp = pd.read_csv(ROOT / "sanity_false_positive.csv")
+t6.loc[len(t6)] = ["Config A, same ambiguity attack (attacker's own U, V)", f"{int(fp.attacker_decodes.sum())}/12", "attacker's QR decodes"]
+extra = sec[sec.accepted.isna()].groupby("test").reason.agg(lambda x: list(x))
+note = "; ".join(f"{k}: {v[0] if len(v) == 1 else 'mean %.2f' % np.mean([float(i) for i in v])}" for k, v in extra.items())
+t7 = pd.DataFrame({"Attack": atks, "A decodes": [f"{int(gA[a])}/12" for a in atks],
+                   "D decodes": [f"{int(gD[a])}/12" for a in atks],
+                   "D module BER %": [round(rd[rd.attack == a].module_ber.mean() * 100, 1) for a in atks]})
+md = ["\n## Table 6: Ownership-claim tests (Config D)\n", t6.to_markdown(index=False), f"\n{note}\n",
+      "\n## Table 7: Robustness, Config A vs Config D at equal PSNR\n", t7.to_markdown(index=False),
+      f"\nMean PSNR: A {ra[(ra.config=='A')&(ra.attack=='No attack')].psnr.mean():.2f} dB, D {rd[rd.attack=='No attack'].psnr.mean():.2f} dB; SSIM D {rd[rd.attack=='No attack'].ssim.mean():.4f}.\n"]
+tm = (OUT.parent / "tables.md").read_text()
+tm = tm.split("\n## Table 6:")[0]
+(OUT.parent / "tables.md").write_text(tm + "\n".join(md))
+t6.to_csv(OUT / "table_table6.csv", index=False); t7.to_csv(OUT / "table_table7.csv", index=False)
+print("tables ok")

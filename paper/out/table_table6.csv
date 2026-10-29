@@ -1,0 +1,10 @@
+test,accepted,reason
+Attacker's own certificate on our image (ambiguity attack),0/12,no QR in image
+"Our certificate, owner field edited",0/12,signature invalid
+Our parameters re-signed with attacker's key,0/12,QR text does not match certificate
+Owner certificate on unmarked cover,0/12,no QR in image
+"Owner certificate on unmarked cover, JPEG-90",0/12,no QR in image
+Legitimate owner on marked image,12/12,accepted
+Overwrite attack: owner claim on re-marked image,0/12,
+Overwrite attack: attacker claim on re-marked image,12/12,
+"Config A, same ambiguity attack (attacker's own U, V)",12/12,attacker's QR decodes
