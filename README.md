@@ -96,6 +96,12 @@ python paper/figs_final.py               # -> paper/final/F01-F10
 
 `run_baseline_watermark.py` and `run_hidden_layer.py` write to `paper/out/` and should be run from the repository root.
 
+Rerunning on another machine gives slightly different numbers, for two known reasons:
+- **JPEG encoder version:** OpenCV/libjpeg builds compress slightly differently, so JPEG rows can move by about one image (e.g. base scheme at JPEG-50: 7/12 on the machine that produced `exp1_watermark.csv`, 8/12 on the machine that produced the paper tables).
+- **Experiment RSA key:** each fresh checkout creates a new key pair, and the proposed QR carries the key's fingerprint, so its module pattern, and with it the per-image numbers, change slightly. Commit the public key and certificate of the run you report if exact reproduction is needed.
+
+The committed CSVs and `paper/final/` are from one consistent run.
+
 ## Results to report with care
 
 - **Centre blanking** zeroes the central 1/4 × 1/4 of the image, i.e. 6.25% of its area.
