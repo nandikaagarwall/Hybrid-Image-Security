@@ -1,9 +1,8 @@
 """Final paper figures: base scheme (A) vs PROPOSED (Config D watermark + AES/RSA hidden layer).
 Writes paper/final/F*.png|pdf. Reads paper/out/*.csv; recomputes images for the showcase image."""
-import shutil
 import numpy as np, pandas as pd, cv2, matplotlib.pyplot as plt
 from run_ownership_cfg import *
-from style import save as _save
+import style  # noqa: F401  (sets the shared plot style)
 from src import metrics as Mm
 from base_paper import MEAN_NCC
 FINAL = ROOT / "paper" / "final"
@@ -123,9 +122,52 @@ ax[0].set_ylabel("QR decodable (% of 12 images)"); ax[0].set_ylim(-4, 104)
 h, l = ax[0].get_legend_handles_labels(); fig.legend(h, l, ncol=2, frameon=False, loc="upper center", bbox_to_anchor=(0.5, 1.06))
 fig.tight_layout(); save(fig, "F06_tradeoff")
 
-# F7 hidden layer, F9 ownership: produced earlier from the same data
-shutil.copy(FIG / "fig08_hidden_layer.png", FINAL / "F07_hidden_layer.png"); shutil.copy(FIG / "fig08_hidden_layer.pdf", FINAL / "F07_hidden_layer.pdf")
-shutil.copy(FIG / "fig11_ownership_attack.png", FINAL / "F09_ownership_attack.png"); shutil.copy(FIG / "fig11_ownership_attack.pdf", FINAL / "F09_ownership_attack.pdf")
+# F7 hidden layer: capacity, RS steganalysis, SPAM detector
+st = pd.read_csv(OUT / "exp1_3_stego.csv"); rs = pd.read_csv(OUT / "steganalysis_rs_chi2.csv")
+pe = pd.read_csv(OUT / "exp2_steganalysis_prelim.csv")
+fig, ax = plt.subplots(1, 3, figsize=(7.2, 2.6))
+lab = {"adaptive": "texture-ranked (ours)", "random": "random LSB"}
+for m, c, mk, ls in [("adaptive", CA, "o", "-"), ("random", GREY, "s", "--")]:
+    g = st[st.method == m].groupby("bpp").psnr_g.agg(["mean", "std"])
+    ax[0].errorbar(g.index, g["mean"], yerr=g["std"], color=c, marker=mk, ms=5, capsize=2, ls=ls, label=lab[m])
+    g = rs[rs.method == m].groupby("bpp").rs_est.agg(["mean", "std"])
+    ax[1].errorbar(g.index, g["mean"], yerr=g["std"], color=c, marker=mk, ms=5, capsize=2, ls=ls, label=lab[m])
+    g = pe[pe.method == m]
+    ax[2].errorbar(g.bpp, g.pe_mean, yerr=g.pe_std, color=c, marker=mk, ms=5, capsize=2, ls=ls, label=lab[m])
+ax[0].set_title("Green-channel PSNR\n(PSNR curves overlap)"); ax[0].set_ylabel("PSNR (dB)")
+ax[1].plot([0, 0.4], [0, 0.4], color="#8a8a85", lw=0.8, ls=":"); ax[1].text(0.2, 0.235, "perfect\nestimate", fontsize=7, color="#6b6b66", ha="right")
+ax[1].set_title("RS steganalysis:\nestimated vs true payload"); ax[1].set_ylabel("RS-estimated rate")
+ax[2].axhline(0.5, color="#8a8a85", lw=0.8, ls=":"); ax[2].text(0.4, 0.485, "undetectable", fontsize=7, color="#6b6b66", ha="right")
+ax[2].set_title("SPAM + RF detector\n(preliminary, 494 patches)"); ax[2].set_ylabel("detection error $P_E$"); ax[2].set_ylim(0.2, 0.55)
+for a in ax: a.set_xlabel("payload (bpp)")
+ax[1].legend(frameon=False, loc="upper left", fontsize=7)
+fig.tight_layout(); save(fig, "F07_hidden_layer")
+
+# F9 false-ownership attack: base scheme vs proposed
+qr_atk = generate_qr_code("Author: Attacker, Country: Nowhere")
+scr_atk, _ = chaotic_logistic_map_scramble(qr_atk, x0=X0, mu=MU)
+U2, S2, V2 = np.linalg.svd(scr_atk.astype(float), full_matrices=False)
+np.savez(TMP / "atk.npz", U=U2, S=S2, V=V2)
+exA_atk = descramble(extract_config_a(A, cover, str(TMP / "atk.npz"), alpha=0.05))
+exA_own = descramble(extract_config_a(A, cover, keyA, alpha=0.05))
+_, mD_own = O.extract_and_decode(D, m_own.shape, X0_OWN, R_OWN, STEP, BLKD)
+mD_atk = O.extract_D(D, m_atk.shape, X0_ATK, R_ATK, STEP, BLKD)
+okA = test_qr_decodability(exA_atk)
+fig, ax = plt.subplots(2, 3, figsize=(7.2, 4.9))
+panels = [
+  (exA_own, f"Owner's key\nQR decodes: {'yes' if test_qr_decodability(exA_own) else 'no'}"),
+  (exA_atk, f"Attacker's own U, V keys\nQR decodes: {'YES — false claim succeeds' if okA else 'no'}"),
+  (rgb(A), f"Base scheme (A) image\nPSNR {calculate_psnr(cover, A):.2f} dB"),
+  (O.modules_to_image(mD_own), "Owner's certificate\nQR decodes, signature valid → accepted"),
+  (O.modules_to_image(mD_atk), "Attacker's own signed certificate\nno QR → rejected"),
+  (rgb(D), f"Proposed image\nPSNR {calculate_psnr(cover, D):.2f} dB")]
+for a, (im, t) in zip(ax.ravel(), panels):
+    a.imshow(im, cmap="gray" if im.ndim == 2 else None, vmin=0, vmax=255, interpolation="nearest")
+    a.set_title(t, fontsize=7.5, color="#b3261e" if "YES" in t else "#1f1f1d")
+    a.set_xticks([]); a.set_yticks([]); a.grid(False)
+ax[0, 0].set_ylabel("Base scheme (A)\nnon-blind, U/V keys", fontsize=8)
+ax[1, 0].set_ylabel("Proposed\nblind + RSA certificate", fontsize=8)
+fig.tight_layout(); save(fig, "F09_ownership_attack")
 
 # F10 comparison with the base paper
 rA = pd.read_csv(OUT / "robustness.csv"); rA = rA[rA.config == "A"]; rP = pd.read_csv(OUT / "final_robustness_P.csv")

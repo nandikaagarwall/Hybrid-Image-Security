@@ -37,7 +37,6 @@ X0, MU = 0.12345, 3.9999               # same key as run_watermark.py
 TEXT = "Author: Pranav, Country: India"
 MESSAGE = "Confidential: project record #001. Sharing prohibited."
 OUT = ROOT / "paper" / "out"; OUT.mkdir(parents=True, exist_ok=True)
-FIG = ROOT / "paper" / "figures"; FIG.mkdir(parents=True, exist_ok=True)
 TMP = Path(tempfile.mkdtemp())
 
 # ---- RSA keys: private key is not in the repo, so use a fresh experiment pair ----

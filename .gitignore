@@ -1,25 +1,28 @@
-# Dataset and results
+# Datasets not committed
 data/bossbase/
-results/figures/*.png
 
 # Python cache & virtual environments
 __pycache__/
-*.pyc
 *.py[cod]
 *$py.class
+.pytest_cache/
 venv/
 .venv/
 env/
 .env
 
-# RSA Private Key (Keep private keys out of version control)
+# Private keys: never commit
 keys/rsa_private.pem
+paper/keys_experiment/
 
-# Temporary experiment outputs & generated test files
+# Temporary outputs (images, PDFs, scratch folders) anywhere...
 exp_tmp*/
+tests_tmp*/
 *.png
 *.jpg
 *.pdf
-!sample_cover.png
-paper/keys_experiment/
-paper/__pycache__/
+*.npz
+# ...except the test images and the final paper figures
+!data/**/*.png
+!paper/final/*.png
+!paper/final/*.pdf

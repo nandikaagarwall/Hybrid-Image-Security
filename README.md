@@ -1,189 +1,124 @@
-# Hybrid Image Security: simulation project
+# Hybrid Image Security
 
-Encryption + steganography + DWT-SVD watermarking.
-Base paper: Sanivarapu et al., *Applied Sciences* 12(17), 8724, 2022.
+Encryption + steganography + DWT-SVD watermarking on one colour image, evaluated against the base paper:
 
-This repo already contains the Phase 0 foundation: the folder layout, shared config, shared metrics (tested), interface contract and setup check. Follow the steps below **in order**. Don't skip ahead.
+> P. V. Sanivarapu, K. N. V. P. S. Rajesh, K. M. Hosny and M. M. Fouda, "Digital Watermarking System for Copyright Protection and Authentication of Images Using Cryptographic Techniques," *Applied Sciences* 12(17):8724, 2022. https://doi.org/10.3390/app12178724
 
-```
-hybrid-image-security/
-├── data/standard/      ← the 12 standard colour images go here
-├── data/bossbase/      ← BOSSbase .pgm files (Person B, not committed to git)
-├── keys/               ← RSA keys, generated ONCE
-├── results/tables/     ← CSVs of every experiment
-├── results/figures/    ← plots
-├── src/
-│   ├── config.py       ← EVERY parameter lives here
-│   ├── io_utils.py     ← load/save images (always PNG)
-│   ├── metrics.py      ← all metrics, shared by both of you
-│   └── interfaces.py   ← the function signatures you both agreed on
-└── scripts/
-    ├── check_setup.py  ← run after setup; must say PASS
-    └── make_keys.py    ← run once
-```
+Nandika Agarwal, Pranalee Patel · NIIT University
 
----
+## What the system does
 
-## PHASE 0: do this together, sitting side by side
+One 512 × 512 colour image carries two independent layers in two channels, so neither can overwrite the other:
 
-### Step 0.1: Install Python and the project (both of you, ~20 min)
-
-1. Install **Python 3.11 or 3.12** from python.org. On Windows, tick "Add Python to PATH".
-2. Install **Git** from git-scm.com, and **VS Code** if you don't have it.
-3. Unzip this folder somewhere without spaces in the path (e.g. `D:\projects\hybrid-image-security`).
-4. Open a terminal in that folder and create a virtual environment:
-   - Windows: `python -m venv .venv` then `.venv\Scripts\activate`
-   - Mac/Linux: `python3 -m venv .venv` then `source .venv/bin/activate`
-5. `pip install -r requirements.txt`
-6. QR decoding needs the zbar library:
-   - Windows: nothing extra (bundled with pyzbar).
-   - Mac: `brew install zbar`
-   - Ubuntu: `sudo apt install libzbar0`
-7. Run `python scripts/check_setup.py`. Everything should PASS except the three data/keys lines. Those get fixed in the next steps.
-
-### Step 0.2: Shared GitHub repo (one person creates it, ~10 min)
-
-1. Person A: on github.com create a **private** repo `hybrid-image-security` and add Person B as a collaborator.
-2. Person A, in the folder:
-   ```
-   git init
-   git add .
-   git commit -m "Phase 0 skeleton"
-   git branch -M main
-   git remote add origin https://github.com/<username>/hybrid-image-security.git
-   git push -u origin main
-   ```
-3. Person B: `git clone <repo url>`, then repeat Step 0.1 steps 4–7 inside the clone.
-4. Working rule: each person works on their own branch (`git checkout -b track-a` / `track-b`) and merges into `main` only when their code runs. **Never** edit `config.py` or `metrics.py` alone; agree first.
-
-### Step 0.3: Lock the design decisions (~15 min, discuss)
-
-Open `src/config.py` and read every value aloud together. Confirm or change:
-
-| Decision | Default set | Why |
+| Layer | Channel | How |
 |---|---|---|
-| Watermark channel | Blue (2) | Same as base paper |
-| Hidden layer channel | Green (1) | Never collides with the watermark |
-| Wavelet | `haar` | **Check the base paper's methodology section**; use whatever wavelet they name |
-| Logistic map r, x₀ | 3.99, 0.31415… | Must stay in the chaotic range (3.57, 4] |
-| Owner text | your names + India | Goes into the QR |
-| Attack parameters | listed in `ATTACKS` | Same for both tracks |
+| Ownership watermark (proposed) | Blue | Owner text + fingerprint of the owner's RSA public key → 29 × 29 QR (error correction H) → bits scrambled with a logistic map → each bit set by QIM on the largest singular value of an 8 × 8 block of the 1-level Haar DWT LL band (1,024 blocks, step 183). **Blind extraction**: needs no cover image and no U/V matrices. |
+| Ownership certificate | – | Owner, key fingerprint, logistic key and embedding settings, signed with RSA-PSS/SHA-256. A claim is accepted only if the signature verifies and the QR read from the image matches the certificate. |
+| Hidden message | Green | AES-256-CBC message, AES key wrapped with RSA-2048-OAEP, embedded by LSB in the most textured 4 × 4 blocks. |
 
-Then write the decisions into the **Decision log** at the bottom of this README and commit. Your professor will ask "why did you choose X". This log is your answer.
+The **base scheme (A)** is the base paper reproduced: 256 × 256 QR, logistic-map scrambling, S′ = S + α·S_QR on the blue LL band (α = 0.05), non-blind extraction with the QR's U, V matrices.
 
-### Step 0.4: Get the 12 standard images (Person A, ~20 min)
+## Headline results (12 images, equal PSNR)
 
-1. Open the base paper and find the figure or table listing its **12 test images**. Write their names in the decision log.
-2. Download them from the **USC-SIPI Image Database** (search "USC-SIPI image database misc"). Most standard 512×512 colour images (Baboon/Mandrill, Peppers, Airplane/F-16, House, Sailboat, Splash, Tiffany…) are in the "Miscellaneous" volume as `.tiff`.
-3. If any image the paper used isn't available, substitute another standard 512×512 colour image and **log the substitution**.
-4. Put all 12 in `data/standard/`, renamed as `01_baboon.tiff`, `02_peppers.tiff`, etc. (the number prefix keeps the order fixed).
-5. Commit them (they're small).
+| | Base scheme (A) | Proposed |
+|---|---|---|
+| PSNR / SSIM | 40.12 dB / 0.994 | 40.19 dB / 0.991 (watermark **and** hidden message) |
+| False-ownership attack accepted | 12/12 | **0/12** |
+| QR decodes after JPEG-70 / JPEG-50 | 8/12 / 8/12 | **12/12 / 12/12** |
+| … after 3 × 3 blur / scaling / centre blanking | 1 / 2 / 0 of 12 | **11 / 11 / 12 of 12** |
+| … after Gaussian noise v = 0.01 / salt & pepper | **12 / 12 of 12** | 0 / 9 of 12 |
+| … after 2° rotation | 0/12 | 0/12 |
+| Extraction | non-blind | blind |
 
-### Step 0.5: Get BOSSbase (Person B, start the download now, it's large)
+All figures and tables for the paper are in [`paper/final/`](paper/final/) (Tables 2–8 as Markdown and LaTeX).
 
-1. Search "BOSSbase 1.01 download". It's hosted by the Binghamton DDE lab. It's 10,000 grayscale 512×512 `.pgm` images (~1.4 GB zipped).
-2. Unzip into `data/bossbase/` (the folder is in `.gitignore`, so it won't go to GitHub; each person who needs it downloads it).
-3. You only need the first 2,000 for now (`BOSS_SUBSET` in config).
-4. Note for later: BOSSbase is grayscale. Because the hidden layer only touches the green channel and the watermark never does, a BOSSbase image can stand in for the green channel in Experiment 2. Write this reasoning in the decision log.
-
-### Step 0.6: Generate keys once (Person A, 1 min)
+## Repository layout
 
 ```
-python scripts/make_keys.py
-git add keys/ && git commit -m "RSA keys (fixed for all experiments)" && git push
+src/                      core library
+  payload.py              AES-256-CBC + RSA-2048-OAEP hybrid encryption, bit packing
+  stego.py                texture-ranked LSB embedding (4 x 4 block variance on the top 6 bits)
+  metrics.py              PSNR, SSIM, NCC, BER, entropy, chi-square, correlation, NPCR/UACI, P_E
+  config.py, io_utils.py  shared paths and reference values
+scripts/                  base-scheme building blocks (used by the paper pipeline)
+  watermark_prep.py       QR generation + logistic-map scrambling
+  embed_watermark.py      Config A embedding (global alpha)
+  embed_watermark_adaptive.py / extract_watermark_adaptive.py   Config B (adaptive alpha, ablation only)
+  extract_watermark.py, evaluate_watermark.py, attacks.py
+  make_keys.py, check_setup.py, download_images.py
+paper/                    everything behind the paper's results
+  ownership.py            PROPOSED watermark: blind block-SVD QIM + RSA-signed certificate
+  pipeline.py             shared wrapper around src/ and scripts/ (images, attacks, hidden layer)
+  run_ownership_cfg.py    proposed-scheme parameters, keys and certificate
+  run_baseline_watermark.py   Configs A / A* / B on 12 images + false-ownership sanity check
+  run_hidden_layer.py     hidden-layer capacity, encryption metrics, SPAM steganalysis
+  run_experiments.py      A / A* / B / C robustness, attack-strength sweeps, alpha trade-off
+  run_steganalysis.py     RS analysis + chi-square attack on the green channel
+  run_ownership.py        ownership-claim tests (12 images)
+  run_final.py            PROPOSED system end to end: robustness, sweeps, trade-off
+  final_tables.py, figs_final.py   build paper/final/
+  base_paper.py           the base paper's reported values (its Tables 2-4)
+  out/                    raw results (CSV) of every run above
+  final/                  paper figures F01-F10 (PNG + PDF) and tables/ (Markdown + LaTeX)
+data/images/              the 12 test images (512 x 512 x 3)
+data/standard/            extra standard images, used only as steganalysis training patches
+keys/rsa_public.pem       project public key (the private key is never committed)
+tests/                    unit tests for the hidden layer
 ```
-Person B: `git pull`. **Nobody regenerates keys after this.**
 
-### Step 0.7: Final check (both)
+## Setup
 
-`python scripts/check_setup.py` → BOSSbase may still FAIL for Person A (fine); everything else must PASS.
+Python 3.11+.
 
-### Step 0.8: Read the contract (both, 10 min)
+```
+pip install -r requirements.txt
+sudo apt install libzbar0        # Ubuntu; macOS: brew install zbar; Windows: nothing extra
+python scripts/check_setup.py
+python -m pytest tests
+```
 
-Read `src/interfaces.py` together. These four functions are how your code plugs together:
+The paper scripts create their own experiment RSA key pair in `paper/keys_experiment/` on first run (git-ignored).
 
-- Person A writes `src/watermark.py` with `embed_watermark` / `extract_watermark`.
-- Person B writes `src/payload.py` with `embed_payload` / `extract_payload`.
-- Inputs and outputs are always `uint8` RGB `(512, 512, 3)`.
-- Save results as **PNG only**. A JPG save silently destroys the embedded bits.
+## Reproducing the results
 
-**Phase 0 is done.** Split up.
+Run from the repository root, in this order (times are for one CPU core):
 
----
+```
+python paper/run_baseline_watermark.py   # ~5 min   -> paper/out/exp1_watermark*.csv, sanity_false_positive.csv
+python paper/run_hidden_layer.py         # ~10 min  -> paper/out/exp1_3_stego.csv, exp5_*.csv, exp2_steganalysis_prelim.csv
+python paper/run_experiments.py          # ~10 min  -> paper/out/robustness.csv, sweeps.csv, alpha_tradeoff.csv, ...
+python paper/run_steganalysis.py         # ~1 min   -> paper/out/steganalysis_rs_chi2.csv
+python paper/run_ownership.py            # ~10 min  -> paper/out/ownership_tests.csv, robustness_D.csv
+python paper/run_final.py                # ~15 min  -> paper/out/final_*.csv
+python paper/final_tables.py             # -> paper/final/tables/
+python paper/figs_final.py               # -> paper/final/F01-F10
+```
 
-## PHASE 1: first tasks for each track
+`run_baseline_watermark.py` and `run_hidden_layer.py` write to `paper/out/` and should be run from the repository root.
 
-### Person A: start with A1 (watermark preparation)
+## Results to report with care
 
-Create `src/watermark.py`. Build and test each function on its own before moving on.
-
-**A1. `make_qr(text) -> uint8 256×256, values 0/255`**
-- Use `qrcode` with `box_size=1, border=4`, then resize to 256×256 with `INTER_NEAREST` (copy from `check_setup.py`).
-- Test: `metrics.qr_decodes(qr, config.OWNER_TEXT)` returns True.
-
-**A2. `rsa_encrypt_qr(qr, pubkey)` / `rsa_decrypt_qr(...)`**
-- The base paper RSA-encrypts the QR. First re-read exactly *how*: per pixel? per block? the text before QR generation? Write your interpretation in the decision log.
-- Test: decrypt(encrypt(qr)) == qr exactly.
-
-**A3. `logistic_scramble(img, r, x0)` / `logistic_unscramble(...)`**
-- Generate a sequence of 256×256 values with `x = r*x*(1-x)` (discard the first `LOGISTIC_DISCARD` values) and `perm = np.argsort(seq)`.
-- Scramble: `flat[perm]`. Unscramble: `out[perm] = scrambled_flat`.
-- Test 1: unscramble(scramble(qr)) == qr.
-- Test 2: run `metrics.corr_all` on the QR vs. the scrambled QR. Correlation should fall from ~0.9 to ~0. **Save these numbers. They're Experiment 5 data.**
-- Test 3: `metrics.entropy` and the histogram of the QR vs. the scrambled QR will be **identical** (permutation only). Save this too; it's an expected weakness.
-
-**A4. Config A embedding** (only after A1–A3 pass)
-- Blue channel → `pywt.dwt2(..., config.WAVELET)` → `np.linalg.svd(LL)` → modify S using the base paper's rule with `ALPHA_FIXED` → inverse SVD → `pywt.idwt2` → clip to uint8.
-- Tune `ALPHA_FIXED` until PSNR on the 12 images is 40–44 dB, then freeze it in config.
-
-### Person B: start with B1 (payload encryption)
-
-Create `src/payload.py`.
-
-**B1. `encrypt_payload(message, pubkey) -> bits`**
-- Generate a random AES-256 key with `Crypto.Random.get_random_bytes(32)`.
-- Encrypt the message with **AES-GCM**: you get the ciphertext, a nonce and a tag.
-- Encrypt the AES key with **RSA-OAEP** (`PKCS1_OAEP`) using `keys/rsa_public.pem`.
-- Pack into one byte string: `len(rsa_key_blob) | rsa_key_blob | nonce | tag | ciphertext`.
-- Convert to bits: `np.unpackbits(np.frombuffer(blob, np.uint8))`.
-- Test: `decrypt_payload(bits, privkey) == message`.
-
-**B2. Payload sized by bits per pixel**
-- For capacity tests you need *n* bits = bpp × 512 × 512. Pad the encrypted blob with random bytes up to *n* bits (the length header tells the decoder where the real data ends).
-- Test: for every value in `PAYLOAD_BPP`, encode → decode returns the message.
-
-**B3. Naive baseline: `lsb_replacement` embed/extract in the green channel**
-- Pick pixel positions with a seeded permutation (`np.random.default_rng(seed).permutation`), then set the LSB to each bit.
-- Test: extracted bits == embedded bits (BER = 0), and PSNR ≥ 50 dB.
-
-**B4. Texture-adaptive embedding**
-- `pip install conseal` and check its docs for WOW / S-UNIWARD / HILL (they give a cost map; you simulate or embed with ±1).
-- If its API doesn't fit, build your own: texture map = local variance in a 3×3 window → embed ±1 (LSB matching) only in the top-texture pixels.
-
-**B5. Start Experiment 2 early**
-- Write a SPAM feature extractor (686-D, second-order SPAM) or check whether `conseal` / other libraries provide one.
-- Extract features for 2,000 BOSSbase covers now (it's slow; let it run overnight).
-
----
-
-## Results format (both, from the first experiment onward)
-
-- One CSV per experiment in `results/tables/`, one row per (image, config, attack, parameter).
-- Columns e.g. `image, config, attack, param, psnr, ssim, ncc, ber, qr_ok, entropy, ...`
-- Use `metrics.mean_std()` for the summary tables in the slides.
-- Never overwrite a results CSV. Add a date to the filename.
-
----
+- **Centre blanking** zeroes the central 1/4 × 1/4 of the image, i.e. 6.25% of its area.
+- **NCC** as defined in the base paper is not centred: an image that was never watermarked scores 0.43 with the base extractor. QR decodability and BER are the more meaningful robustness measures.
+- **Reproduction gap:** our reproduction of the base scheme does not reach the base paper's reported NCC under blur, scaling and rotation. The base paper does not state its crop or rotation sizes and gives its salt & pepper density as 0.5.
+- **AES metrics** (entropy 7.9975, χ² 227.9) are measured on 64 KiB of ciphertext; the 64-byte message alone is too short for byte statistics. NPCR for a change in the last byte is 0.02% (CBC propagates forward only).
+- **Limitations:** the proposed watermark is weaker than the base scheme under heavy additive noise at 40 dB (it reaches 12/12 at 37.7 dB); neither scheme survives rotation; an attacker can overwrite a blind mark with their own (needs a trusted timestamp on the certificate); the LSB hidden message survives only lossless (PNG) sharing; the SPAM steganalysis result is preliminary (494 patches); logistic-map scrambling is a permutation and is breakable by chosen-plaintext attack, so secrecy rests on AES/RSA.
+- **Lena:** IEEE no longer accepts papers containing the Lena image; the figures use Peppers.
 
 ## Decision log
 
-Fill this in as you go. Every row = one choice your professor might question.
+| Decision | Reason |
+|---|---|
+| Watermark in blue, hidden message in green, red untouched | The two layers can never overwrite each other |
+| 1-level Haar DWT, LL band | As in the base paper |
+| 12 test images as in the base paper's Table 2 | Direct comparison; "monarch.png" is the fishing-boat image, reported as Boat |
+| AES-256-CBC + RSA-2048-OAEP for the message | RSA alone cannot encrypt long messages; random key and IV per message |
+| Texture-ranked LSB, ranking on the top 6 bits | Changes hide in busy areas; the receiver can recompute the same ranking |
+| Base scheme kept at α = 0.05 | As published; gives PSNR ≈ 40 dB |
+| Config B (adaptive α) dropped from the main results | It lowered PSNR and robustness to JPEG/noise; kept in `paper/out/robustness.csv` as an ablation |
+| Proposed watermark: blind QIM + RSA-signed certificate | The base scheme accepts false ownership claims (12/12): its verifier uses keys the claimant supplies |
+| QIM step 183 | Matches the base scheme's PSNR (≈ 40 dB) for an equal-quality comparison |
+| QR text = short owner name + 8-hex key fingerprint, error correction H | Must fit 1,024 blocks (29 × 29 = 841 modules) and still decode after attacks |
+| Showcase image: Peppers | IEEE policy on Lena |
 
-| Date | Decision | Reason | Who |
-|---|---|---|---|
-| | Watermark in blue, hidden layer in green | Layers can't overwrite each other; tracks can run in parallel | both |
-| | Wavelet = ? | Base paper section ? | |
-| | 12 images = ? | Base paper Fig/Table ? | |
-| | RSA applied to QR how? | Base paper section ? | |
-| | AES-GCM + RSA-OAEP for payload | RSA alone can't encrypt long messages; GCM also authenticates | |
-| | BOSSbase grayscale used as green channel | Watermark never touches green | |
+The pre-cleanup state of the repository (including the Phase 0/1 setup guide) is preserved on the branch `archive/original-main`.

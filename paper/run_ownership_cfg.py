@@ -1,4 +1,4 @@
-"""Shared Config D parameters, keys and certificates (imported by run_ownership.py and figs_ownership.py)."""
+"""Shared Config D parameters, keys and certificates (imported by run_ownership.py, run_final.py and figs_final.py)."""
 import json, copy
 import numpy as np, pandas as pd
 from pipeline import *

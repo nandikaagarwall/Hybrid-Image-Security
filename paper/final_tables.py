@@ -58,8 +58,8 @@ write("T3_robustness", T3, "Table 3. Robustness of the watermark and the hidden 
       "BER for A is over QR pixels (256 × 256), for the proposed scheme over QR modules (29 × 29). NCC as defined in the base paper; an image that was never watermarked scores 0.43 with A's extractor. Ownership verified = certificate signature valid and extracted QR equals the certified text.")
 
 # ---------------- T4 hidden layer ----------------
-st = pd.read_csv(OUT.parent.parent / "exp1_3_stego.csv"); rs = pd.read_csv(OUT / "steganalysis_rs_chi2.csv")
-pe = pd.read_csv(OUT.parent.parent / "exp2_steganalysis_prelim.csv")
+st = pd.read_csv(OUT / "exp1_3_stego.csv"); rs = pd.read_csv(OUT / "steganalysis_rs_chi2.csv")
+pe = pd.read_csv(OUT / "exp2_steganalysis_prelim.csv")
 rows = []
 for bpp in [0.05, 0.1, 0.2, 0.3, 0.4]:
     s = st[(st.bpp == bpp) & (st.method == "adaptive")]
@@ -74,7 +74,7 @@ write("T4_hidden_layer", T4, "Table 4. Hidden-layer capacity and detectability (
       f"RS estimate = embedding rate inferred by RS steganalysis (closer to the true payload = easier to detect; on covers: {rs[rs.method=='cover'].rs_est.mean():.3f}). P_E = detection error of a SPAM-686 + random-forest detector (0.5 = undetectable; preliminary, 494 patches). Actual message: 340 bytes = 2,720 bits; padded with random bits to the stated payload.")
 
 # ---------------- T5 security metrics ----------------
-sec = pd.read_csv(OUT.parent.parent / "exp5_security.csv").set_index("item"); dif = pd.read_csv(OUT.parent.parent / "exp5_differential.csv", index_col=0).iloc[:, 0]
+sec = pd.read_csv(OUT / "exp5_security.csv").set_index("item"); dif = pd.read_csv(OUT / "exp5_differential.csv", index_col=0).iloc[:, 0]
 own = pd.read_csv(OUT / "ownership_tests.csv")
 bf = own[own.test.str.startswith("Random logistic")].reason.iloc[0]
 T5 = pd.DataFrame([
@@ -93,7 +93,7 @@ write("T5_security", T5, "Table 5. Security of the encryption and scrambling com
       "AES metrics on 64 KiB of ciphertext (the 64-byte message alone is too short for byte statistics). NPCR for a change in the LAST byte is 0.02%, as expected for CBC, which propagates changes forward only.")
 
 # ---------------- T6 ownership ----------------
-fp = pd.read_csv(OUT.parent.parent / "sanity_false_positive.csv")
+fp = pd.read_csv(OUT / "sanity_false_positive.csv")
 g = own[own.accepted.notna()].groupby("test").accepted.apply(lambda x: f"{int((x == True).sum())}/{len(x)}")
 T6 = pd.DataFrame([
     ["Real owner claims the marked image", "12/12", g["Legitimate owner on marked image"], "accept"],

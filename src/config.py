@@ -1,7 +1,9 @@
 """
-Single source of truth for every fixed parameter in the experiments.
-Change a value here, never inside individual scripts, so both tracks
-always run with identical settings. Record any change in the README log.
+Shared paths and reference values for the project.
+
+The paper experiments read their parameters from paper/pipeline.py (base scheme,
+attacks, hidden layer) and paper/run_ownership_cfg.py (proposed watermark). The
+values below are kept in step with those files; change both together.
 """
 from pathlib import Path
 
@@ -27,33 +29,29 @@ DWT_LEVEL = 1
 OWNER_TEXT = "Nandika Agarwal, Pranalee Patel | India | NIIT University"
 
 # ---------- chaotic logistic map  x_{n+1} = r * x_n * (1 - x_n) ----------
-LOGISTIC_R = 3.99                 # must be in (3.57, 4] for chaotic behaviour
-LOGISTIC_X0 = 0.3141592653589793  # initial condition = part of the key
-LOGISTIC_DISCARD = 1000           # drop transient iterations
+LOGISTIC_R = 3.9999               # must be in (3.57, 4] for chaotic behaviour
+LOGISTIC_X0 = 0.12345             # initial condition = part of the key
+LOGISTIC_DISCARD = 0              # the implementation (scripts/watermark_prep.py) discards none
 
 # ---------- base paper embedding strength (Config A) ----------
-ALPHA_FIXED = 0.05                # TUNE in Step A3 until PSNR lands in 40-44 dB, then freeze
+ALPHA_FIXED = 0.05                # as in the base paper; gives PSNR ~40.1 dB on the 12 images
 
 # ---------- adaptive strength (Config B) ----------
 BLOCK = 8                         # block size on the LL band
-ALPHA_MIN = 0.02
-ALPHA_MAX = 0.10
+ALPHA_MIN = 0.01                  # as used in scripts/embed_watermark_adaptive.py
+ALPHA_MAX = 0.15
 
-# ---------- hidden payload (Config C) ----------
+# ---------- proposed watermark (paper/run_ownership_cfg.py) ----------
+QIM_STEP = 183                    # QIM step on the largest singular value; PSNR ~40.2 dB
+QIM_BLOCK = 8                     # 8 x 8 blocks of the 256 x 256 LL band -> 1,024 blocks
+QR_ECC = "H"                      # QR error-correction level (29 x 29 modules)
+
+# ---------- hidden payload (green channel) ----------
 PAYLOAD_BPP = [0.05, 0.1, 0.2, 0.3, 0.4]   # capacity sweep (Experiment 3)
 PAYLOAD_MESSAGE = "Confidential: project record #001. Sharing prohibited."
 
-# ---------- attacks (parameters shared by both tracks) ----------
-ATTACKS = {
-    "none": {},
-    "salt_pepper": {"density": [0.01, 0.05]},
-    "gaussian": {"var": [0.001, 0.01]},
-    "jpeg": {"quality": [90, 70, 50]},
-    "crop": {"fraction": [0.25]},
-    "rotation": {"degrees": [1, 5]},
-    "scaling": {"factor": [0.5, 2.0]},
-    "translation": {"pixels": [10]},
-}
+# ---------- attacks ----------
+# The attack suite used in the paper is ATTACKS in paper/pipeline.py (12 settings).
 
 # ---------- steganalysis (Experiment 2) ----------
 BOSS_SUBSET = 2000                # start with 2000, raise to 5000 if time allows

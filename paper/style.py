@@ -1,3 +1,4 @@
+"""Shared matplotlib style for the paper figures (imported for its side effect)."""
 import matplotlib as mpl
 mpl.rcParams.update({"font.family": "DejaVu Sans", "font.size": 9, "axes.titlesize": 9.5,
     "axes.labelsize": 9, "xtick.labelsize": 8, "ytick.labelsize": 8, "legend.fontsize": 8,
@@ -9,6 +10,3 @@ COL = {"A": "#2a78d6", "A*": "#eb6834", "B": "#1baf7a", "C": "#eda100", "random"
        "adaptive": "#2a78d6", "cover": "#b9b8b2"}
 MRK = {"A": "o", "A*": "s", "B": "^", "C": "D", "adaptive": "o", "random": "s"}
 NAME = {"A": "A: base (α=0.05)", "A*": "A*: base (α=0.06)", "B": "B: adaptive α", "C": "C: A + hidden layer"}
-def save(fig, stem):
-    from pipeline import FIG
-    fig.savefig(FIG / f"{stem}.png"); fig.savefig(FIG / f"{stem}.pdf")

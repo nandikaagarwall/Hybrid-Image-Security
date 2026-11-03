@@ -1,10 +1,13 @@
-"""Hidden layer (team's texture-ranked LSB from src/stego.py, applied to the GREEN channel),
+"""Run from the repo root: python paper/run_hidden_layer.py
+Hidden layer (team's texture-ranked LSB from src/stego.py, applied to the GREEN channel),
 naive random-LSB baseline, Exp 5 security metrics, preliminary steganalysis, timing."""
 import sys, os, time, glob
 from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT)); sys.path.insert(0, str(ROOT / "scripts"))
 os.chdir(ROOT)
+sys.path.insert(0, str(ROOT / "paper"))
+from pipeline import PUB, PRIV          # experiment RSA key pair (created on first run, never committed)
 import numpy as np, cv2, pandas as pd
 from Crypto.Cipher import AES
 from src.stego import calculate_block_variances, BLOCK_SIZE
@@ -44,7 +47,7 @@ def extract(ch, n, method):
 
 def payload_bits(n_bits):
     """Real AES+RSA encrypted message + length header, padded with random bits to n_bits."""
-    blob = encrypt_payload("Confidential: project record #001. Sharing prohibited.")
+    blob = encrypt_payload("Confidential: project record #001. Sharing prohibited.", str(PUB))
     bits = np.array(bytes_to_bitstream(blob), dtype=np.uint8)
     if n_bits > bits.size:
         bits = np.concatenate([bits, rng.integers(0, 2, n_bits - bits.size, dtype=np.uint8)])
@@ -62,7 +65,7 @@ for name in IMAGES:
             t = time.perf_counter(); Gs = embed(G, bits, method); te = time.perf_counter() - t
             st = img.copy(); st[..., 1] = Gs
             t = time.perf_counter(); ext = extract(Gs, n, method); tx = time.perf_counter() - t
-            msg_ok = decrypt_payload(bitstream_to_bytes(list(ext))) .startswith("Confidential")
+            msg_ok = decrypt_payload(bitstream_to_bytes(list(ext)), str(PRIV)) .startswith("Confidential")
             bgr = cv2.cvtColor(st, cv2.COLOR_RGB2BGR)
             def ber_after(att):
                 a = cv2.cvtColor(att, cv2.COLOR_BGR2RGB)[..., 1]
@@ -78,7 +81,7 @@ for name in IMAGES:
                 ber_gauss001=ber_after(apply_noise(bgr, "gaussian", 0.001)),
                 t_embed=te, t_extract=tx))
     print(name, flush=True)
-pd.DataFrame(rows).to_csv("out/exp1_3_stego.csv", index=False)
+pd.DataFrame(rows).to_csv("paper/out/exp1_3_stego.csv", index=False)
 
 # ---------------- Exp 5: security metrics ----------------
 sec = []
@@ -121,8 +124,8 @@ diff = dict(npcr_scramble=npcr_s, uaci_scramble=uaci_s,
             aes_wrongkey_bytes_differ_pct=aes_wrong_diff,
             logistic_wrong_x0_ber=calculate_ber(qr, unscr_wrong),
             logistic_right_x0_ber=calculate_ber(qr, unscr_right))
-pd.DataFrame(sec).to_csv("out/exp5_security.csv", index=False)
-pd.Series(diff).to_csv("out/exp5_differential.csv")
+pd.DataFrame(sec).to_csv("paper/out/exp5_security.csv", index=False)
+pd.Series(diff).to_csv("paper/out/exp5_differential.csv")
 print(pd.DataFrame(sec).round(4)); print(pd.Series(diff).round(4))
 
 # ---------------- Exp 2 (preliminary): steganalysis on image patches ----------------
@@ -184,4 +187,4 @@ for bpp in [0.1, 0.2, 0.4]:
         det.append(dict(bpp=bpp, method=method, pe_mean=np.mean(pes), pe_std=np.std(pes, ddof=1),
                         n_cover=len(patches)))
         print(det[-1], flush=True)
-pd.DataFrame(det).to_csv("out/exp2_steganalysis_prelim.csv", index=False)
+pd.DataFrame(det).to_csv("paper/out/exp2_steganalysis_prelim.csv", index=False)

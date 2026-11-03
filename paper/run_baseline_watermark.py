@@ -1,4 +1,5 @@
-"""Real measurements for Config A (base paper) and Config B (adaptive) on the 12 images.
+"""Run from the repo root: python paper/run_baseline_watermark.py
+Real measurements for Config A (base paper) and Config B (adaptive) on the 12 images.
 Uses the team's own embed/extract/attack code unchanged."""
 import sys, os, time, tempfile
 from pathlib import Path
@@ -79,7 +80,7 @@ for name in IMAGES:
     print(name, "done", flush=True)
 
 df = pd.DataFrame(rows)
-df.to_csv("out/exp1_watermark.csv", index=False)
+df.to_csv("paper/out/exp1_watermark.csv", index=False)
 print("mean adaptive alpha:", np.mean(alphas_b))
 
 # ---- equal-quality comparison: find alpha for Config A that matches Config B's mean PSNR ----
@@ -100,7 +101,7 @@ for name in IMAGES:
     cover = cv2.imread(f"data/images/{name}.png")
     wm, k, t = embed_A(name, best[0])
     evaluate(f"A* (base, a={best[0]})", name, cover, wm, k, extract_config_a, {"alpha": best[0]}, t, rows2)
-pd.DataFrame(rows2).to_csv("out/exp1_watermark_matched.csv", index=False)
+pd.DataFrame(rows2).to_csv("paper/out/exp1_watermark_matched.csv", index=False)
 
 # ---- sanity check: false-positive ownership (known SVD watermark flaw) ----
 qr2 = generate_qr_code("Author: Attacker, Country: Nowhere")
@@ -122,5 +123,5 @@ for name in IMAGES:
                    attacker_decodes=bool(test_qr_decodability(c)),
                    unmarked_ncc=calculate_ncc(scr, ex0), unmarked_ber=calculate_ber(qr, c0),
                    unmarked_decodes=bool(test_qr_decodability(c0))))
-pd.DataFrame(fp).to_csv("out/sanity_false_positive.csv", index=False)
+pd.DataFrame(fp).to_csv("paper/out/sanity_false_positive.csv", index=False)
 print(pd.DataFrame(fp))
