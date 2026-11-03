@@ -26,3 +26,10 @@ tests_tmp*/
 !data/**/*.png
 !paper/final/*.png
 !paper/final/*.pdf
+
+# LaTeX build files
+paper/manuscript/*.aux
+paper/manuscript/*.log
+paper/manuscript/*.out
+paper/manuscript/*.toc
+paper/manuscript/*.synctex.gz

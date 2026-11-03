@@ -1,0 +1,864 @@
+% =====================================================================
+%  Hybrid Image Security -- first draft for supervisor feedback
+%  Source of every number: the Hybrid-Image-Security repository
+%  (paper/out/*.csv, paper/final/tables/*). Figures: paper/final/.
+%  Compile from paper/manuscript/:  pdflatex main && pdflatex main
+% =====================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\IfFileExists{lmodern.sty}{\usepackage[T1]{fontenc}\usepackage{lmodern}}{} % falls back to Computer Modern
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric,fit,calc}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage[section]{placeins}
+\usepackage[hidelinks]{hyperref}
+
+\graphicspath{{../final/}{figures/}}
+\captionsetup{font=small,labelfont=bf}
+\setlist{nosep,leftmargin=*}
+\renewcommand{\arraystretch}{1.15}
+\newcommand{\todo}[1]{\textcolor{red}{[#1]}}
+\algrenewcommand\algorithmicrequire{\textbf{Input:}}
+\algrenewcommand\algorithmicensure{\textbf{Output:}}
+
+\title{Ownership-Safe Hybrid Image Security: Blind Block-SVD Watermarking with an RSA-Signed Certificate and an AES-256/RSA-2048 Hidden Channel}
+
+\author{Nandika Agarwal\textsuperscript{1} \and Pranalee Patel\textsuperscript{1}\\[4pt]
+\small\textsuperscript{1}NIIT University, Neemrana, India\\
+\small Supervisor: \todo{Professor's name}, Cryptography course\\
+\small\texttt{\todo{email addresses}}}
+% TODO: confirm affiliation wording and the supervisor's name.
+
+\date{Draft for supervisor feedback --- November 2026}
+
+\begin{document}
+\maketitle
+
+% =====================================================================
+\begin{abstract}
+\noindent\textbf{In this article.}
+DWT--SVD watermarking with a QR-code watermark is widely used for image copyright protection, and the base paper~\cite{sanivarapu2022} combines it with logistic-map scrambling and RSA. Its extractor, however, rebuilds the watermark from singular vectors supplied by the claimant, so anyone can supply their own vectors and ``extract'' their own QR code from someone else's image: a false-ownership attack known for SVD watermarking~\cite{zhang2005comments}. We reproduce the base scheme and confirm the attack on all 12 test images. We then propose a hybrid scheme that stores two independent layers in two colour channels. In the blue channel, a QR code carrying the owner's name and a fingerprint of the owner's RSA public key is scrambled with a logistic map and embedded, one bit per block, by quantisation index modulation (QIM) on the largest singular value of $8\times8$ blocks of the DWT LL band. Extraction is blind: it needs neither the cover image nor singular vectors. Ownership is proved by an RSA-PSS-signed certificate that must match the QR code read from the image. In the green channel, a message encrypted with AES-256-CBC, whose key is wrapped with RSA-2048-OAEP, is hidden by texture-ranked LSB embedding.
+
+\smallskip\noindent\textbf{Results.}
+On 12 standard $512\times512$ colour images the proposed image keeps a PSNR of $40.19\pm0.24$\,dB and SSIM of $0.9907$ while carrying both the watermark and a 0.10\,bpp encrypted message (base scheme: $40.12$\,dB, $0.9941$, watermark only). The false-ownership attack succeeds on 12/12 images against the base scheme and on 0/12 against the proposed scheme; forged and re-signed certificates and unmarked images are all rejected (0/12 each), and none of 300 random keys produces a decodable QR code. Under 11 attacks the watermark decodes in 103 of 132 attack--image cases versus 79 for the base scheme at equal PSNR, with 12/12 after JPEG $Q=70$ and $Q=50$ (base: 8/12), 11/12 after $3\times3$ mean blur (base: 1/12), 11/12 after $0.5\times$ rescaling (base: 2/12) and 12/12 after centre blanking (base: 0/12). The encrypted message is recovered in every clean run, and RS steganalysis estimates only $0.199$ of a true $0.40$\,bpp payload (random LSB: $0.404$). The proposed scheme is weaker under heavy additive noise (Gaussian $v=0.01$: 0/12 versus 12/12) and neither scheme survives a $2^\circ$ rotation.
+
+\smallskip\noindent\textbf{Improvement percentage.}
+For lower-is-better metrics we use $\mathrm{Imp}=\frac{\text{Old}-\text{New}}{\text{Old}}\times100$; for higher-is-better metrics, $\mathrm{Imp}=\frac{\text{New}-\text{Old}}{\text{Old}}\times100$. Against the base scheme as reproduced under identical conditions: false-ownership acceptance $100\%\rightarrow0\%$ gives $\frac{100-0}{100}\times100=\mathbf{100\%}$ (lower-better form); decodable attack cases $79\rightarrow103$ give $\frac{103-79}{79}\times100=\mathbf{+30.4\%}$; mean NCC after blur $0.6081\rightarrow0.9932$ gives $\mathbf{+63.3\%}$ and after rescaling $0.6037\rightarrow0.9964$ gives $\mathbf{+65.1\%}$ (higher-better form); verifier key material $1{,}835{,}008\rightarrow758$ bytes gives $\mathbf{99.96\%}$ (lower-better form). Against the values \emph{reported} by the base paper~\cite{sanivarapu2022} (higher-better form): NCC after JPEG $Q=90$ $0.9933\rightarrow0.9998$ ($\mathbf{+0.65\%}$), after blur $0.9909\rightarrow0.9932$ ($+0.23\%$), after translation $0.9781\rightarrow0.9865$ ($+0.87\%$); PSNR $42.45\rightarrow40.19$\,dB ($-5.32\%$), and NCC after Gaussian noise ($-8.27\%$) and rotation ($-42.62\%$) are lower. \todo{Improvement percentages against 2--3 similar papers will be added once those papers are selected.}
+\end{abstract}
+
+\smallskip\noindent\textbf{Keywords:} digital watermarking; QR code; DWT; SVD; quantisation index modulation; RSA; AES; steganography; ownership verification.
+
+% =====================================================================
+\section{Introduction}\label{sec:intro}
+
+Digital images are copied and redistributed with little effort, so their owners need ways to prove ownership and, at times, to send confidential information inside the image itself~\cite{sanivarapu2022}. Three families of techniques address different parts of this problem. Encryption keeps content secret but produces data that is visibly protected. Steganography hides that a message exists but does not prove ownership. Digital watermarking embeds an identifier that survives ordinary processing and so supports ownership claims. A single layer leaves gaps that the others fill; this work combines them in one image and, in doing so, repairs a security flaw in the watermarking scheme it builds on.
+
+\subsection{Transform-domain watermarking with singular values}\label{sec:intro-core}
+
+A watermark is embedded in a transform domain so that it spreads over many pixels and survives compression and filtering. The base paper~\cite{sanivarapu2022} applies a one-level discrete wavelet transform (DWT) to one colour channel and modifies the singular values of the low-frequency LL sub-band obtained by singular value decomposition (SVD). The LL band holds most of the image energy, and its singular values change little under small distortions~\cite{liu2002svd}. The watermark is a QR code of the owner's identity, scrambled with a chaotic logistic map~\cite{may1976} before embedding so that local damage is spread over the whole code.
+
+The core idea of this work is to keep the DWT--SVD carrier but to change \emph{what} is stored in the singular values and \emph{how} it is read back. Instead of adding the watermark's singular values to the cover's (which requires the watermark's singular vectors at extraction), each QR bit is written into the largest singular value of a small LL block by quantisation index modulation (QIM): the value is moved to the centre of one of two interleaved quantisation cells, one for bit 0 and one for bit 1 (Figure~\ref{fig:qim-concept}). % CITATION NEEDED: QIM (e.g., Chen and Wornell, IEEE Trans. Inf. Theory, 2001)
+The bit is read back from the image alone~\cite{TODO}. Ownership is then bound to the image by a certificate signed with RSA~\cite{rfc8017}, and a separate channel carries an AES-encrypted message~\cite{fips197}.
+
+\begin{figure}[!htbp]
+\centering
+\begin{tikzpicture}[x=1.15cm,y=1cm,>=Stealth]
+  \draw[->,thick] (-0.3,0) -- (8.6,0) node[right] {$\sigma_1$};
+  \foreach \k in {0,2,4,6,8} {\draw (\k,0.12) -- (\k,-0.12);}
+  \node[below] at (0,-0.12) {$q\Delta$};
+  \node[below] at (2,-0.12) {$(q{+}1)\Delta$};
+  \node[below] at (4,-0.12) {$(q{+}2)\Delta$};
+  \node[below] at (6,-0.12) {$(q{+}3)\Delta$};
+  \foreach \c in {0.5,2.5,4.5,6.5} {\fill[blue!70] (\c,0) circle (3pt);}
+  \foreach \c in {1.5,3.5,5.5,7.5} {\fill[orange!90!black] (\c,0) circle (3pt);}
+  \node[blue!70,above] at (0.5,0.15) {\scriptsize 0};
+  \node[orange!90!black,above] at (1.5,0.15) {\scriptsize 1};
+  \draw[dashed] (3.15,-0.12) -- (3.15,1.35) node[above,font=\small] {cover $\sigma_1$};
+  \draw[->,thick,orange!90!black] (3.15,0.45) -- (3.5,0.45);
+  \node[orange!90!black,font=\small,anchor=west] at (3.55,0.45) {embed bit 1: move to $(q{+}\tfrac34)\Delta$};
+  \draw[->,thick,blue!70] (3.15,0.9) -- (2.5,0.9);
+  \node[blue!70,font=\small,anchor=east] at (2.45,0.9) {embed bit 0: move to $(q{+}\tfrac14)\Delta$};
+  \draw[blue!70,densely dotted] (2.5,0.9) -- (2.5,0.08);
+  \draw[orange!90!black,densely dotted] (3.5,0.45) -- (3.5,0.08);
+  \draw[<->] (4,-0.9) -- (6,-0.9) node[midway,below,font=\small] {step $\Delta$};
+\end{tikzpicture}
+\caption{Quantisation index modulation on the largest singular value $\sigma_1$ of an LL block. The axis is divided into cells of width $\Delta$; bit 0 is written by moving $\sigma_1$ to $(q+\tfrac14)\Delta$ (blue) and bit 1 to $(q+\tfrac34)\Delta$ (orange), where $q=\lfloor\sigma_1/\Delta\rfloor$. The reader recovers the bit from $\sigma_1 \bmod \Delta$ alone, without the cover image or any singular vectors.}
+\label{fig:qim-concept}
+\end{figure}
+
+\subsection{Why blind, certificate-bound embedding}\label{sec:intro-why}
+
+The base scheme embeds $S' = S + \alpha S_W$ and extracts the watermark as $U_W\,\mathrm{diag}\!\big((S^{*}-S)/\alpha\big)\,V_W^{\top}$, where $U_W$ and $V_W$ are the QR code's singular vectors kept as a key. Because $U_W$ and $V_W$ carry most of the QR code's structure, whoever supplies them largely decides what is ``extracted''. This weakness of SVD watermarking was pointed out by Zhang and Li~\cite{zhang2005comments} for the scheme of Liu and Tan~\cite{liu2002svd}. Our reproduction shows that the attack is practical against the base scheme: an attacker's own $U,V$ extract the attacker's QR code from the owner's image on 12 of 12 test images (Section~\ref{sec:res-own}).
+
+Signing the key file does not repair this, because an attacker can sign their own fake keys with their own RSA key. The repair has to remove the claimant's influence over the extracted watermark. Blind QIM extraction does exactly that: the bits come from the image, and the certificate only names the scrambling key and settings needed to read them. The RSA-signed certificate then ties the identity in the extracted QR code to a public key. Removing the cover image and the $2\times256\times256$ singular-vector matrices from the verifier's inputs also shrinks the key material from about 1.8\,MB to 758 bytes. The second layer, an AES-256-CBC message~\cite{fips197} whose key is wrapped with RSA-2048-OAEP~\cite{rfc8017}, follows the standard hybrid-encryption pattern: the symmetric cipher handles the data, and the asymmetric one handles key transport.
+
+\subsection{Existing work}\label{sec:intro-related}
+
+Liu and Tan~\cite{liu2002svd} proposed modifying an image's singular values to carry a watermark for rightful-ownership protection, and Zhang and Li~\cite{zhang2005comments} showed that such schemes can return a watermark that was never embedded when the verifier uses singular vectors chosen by the claimant. Sanivarapu et al.~\cite{sanivarapu2022} combine a QR-code watermark, RSA, logistic-map scrambling and DWT--SVD embedding in the blue channel of colour images; they report a mean PSNR of 42.45\,dB on 12 images and NCC between 0.978 and 0.996 under eight noise and geometric attacks, and compare favourably with four earlier schemes. They do not evaluate the false-ownership attack, decodability of the extracted QR code, or a confidential payload. % CITATION NEEDED: further DWT-SVD / QR watermarking schemes and hybrid crypto-stego-watermark schemes for the literature review.
+\todo{Literature review of 2--3 similar papers (to be selected) and further related work~\cite{TODO}.}
+
+For the hidden layer, steganalysis is the relevant threat model. Pevn\'y, Bas and Fridrich~\cite{pevny2010spam} introduced the subtractive pixel adjacency matrix (SPAM) features that we use for a learned detector, and the BOSS contest~\cite{bas2011boss} set the standard benchmark database for such evaluations. % CITATION NEEDED: RS steganalysis (Fridrich, Goljan and Du, ACM MM&Sec 2001); chi-square attack (Westfeld and Pfitzmann, Information Hiding 2000).
+Classical attacks on LSB embedding, RS analysis and the pairs-of-values $\chi^2$ test, are also applied~\cite{TODO}.
+
+\paragraph{Research gap.} The base scheme (i) accepts false ownership claims, (ii) needs the original cover and per-image singular vectors to extract the watermark, (iii) uses one global strength $\alpha$ that leaves its watermark fragile to blur, rescaling and partial erasure, and (iv) carries no confidential payload. Its evaluation reports NCC only, which, as we show, stays at 0.43 even for an image that was never watermarked.
+
+\paragraph{Contributions.}
+\begin{itemize}
+  \item A faithful reproduction of the base scheme on its 12 test images, with an evaluation protocol based on QR decodability and bit error rate in addition to NCC, and a practical demonstration of the false-ownership attack (12/12).
+  \item A blind watermark: QIM on the largest singular value of $8\times8$ LL blocks, logistic-map scrambling of the bit positions, cyclic repetition over all 1,024 blocks, and a decoder with blind drift correction, median pre-filtering and grid re-synchronisation.
+  \item An RSA-PSS-signed ownership certificate bound to the QR content through a public-key fingerprint, which rejects the false-ownership attack (0/12), edited certificates (0/12) and re-signed certificates (0/12).
+  \item A confidential channel in the green channel: AES-256-CBC with RSA-2048-OAEP key wrapping, embedded by texture-ranked LSB, which RS steganalysis underestimates by about half.
+  \item An equal-PSNR comparison under 11 attacks, a capacity and steganalysis study, and an honest account of where the proposed scheme is weaker.
+\end{itemize}
+
+Figure~\ref{fig:overview} gives an overview of the proposed system.
+
+\begin{figure}[!htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[>=Stealth, node distance=0.5cm and 0.6cm,
+  box/.style={draw, rounded corners=2pt, align=center, font=\small, minimum height=0.9cm, inner sep=4pt},
+  img/.style={box, fill=gray!12},
+  blue/.style={box, fill=blue!8, draw=blue!60},
+  green/.style={box, fill=green!8, draw=green!50!black},
+  key/.style={box, fill=yellow!15, draw=orange!70!black, font=\footnotesize}]
+  \node[img] (cover) {Cover image\\$512\times512\times3$};
+  \node[blue, right=1.1cm of cover, yshift=1.3cm] (qr) {Owner text +\\key fingerprint\\$\rightarrow$ QR ($29{\times}29$)};
+  \node[blue, right=of qr] (scr) {Logistic-map\\scrambling};
+  \node[blue, right=of scr] (qim) {DWT LL, $8{\times}8$ blocks\\QIM on $\sigma_1$};
+  \node[green, right=1.1cm of cover, yshift=-1.3cm] (msg) {Secret message};
+  \node[green, right=of msg] (enc) {AES-256-CBC\\+ RSA-2048-OAEP};
+  \node[green, right=of enc] (lsb) {Texture-ranked\\LSB};
+  \node[img, right=1.0cm of qim, yshift=-1.3cm] (out) {Protected image\\(blue: watermark,\\green: message,\\red: unchanged)};
+  \node[key, above=0.45cm of scr] (cert) {RSA-PSS certificate: owner, fingerprint, $(r,x_0)$, $\Delta$, block size};
+  \draw[->] (cover.east) -- ++(0.4,0) |- (qr.west);
+  \draw[->] (cover.east) -- ++(0.4,0) |- (msg.west);
+  \draw[->] (qr) -- (scr); \draw[->] (scr) -- (qim); \draw[->] (msg) -- (enc); \draw[->] (enc) -- (lsb);
+  \draw[->] (qim.east) -| (out.north); \draw[->] (lsb.east) -| (out.south);
+  \draw[->, dashed] (cert.south) -- (scr.north);
+  \node[font=\footnotesize, blue!60!black, above=0.05cm of qim] {blue channel};
+  \node[font=\footnotesize, green!40!black, below=0.05cm of lsb] {green channel};
+\end{tikzpicture}}
+\caption{Overview of the proposed system. The ownership watermark (blue channel) and the encrypted message (green channel) occupy different channels and never overwrite each other. The signed certificate records the parameters needed to read the watermark and binds them to the owner's RSA public key.}
+\label{fig:overview}
+\end{figure}
+
+\paragraph{Organisation.} Section~\ref{sec:alg} describes the algorithms of the base paper and of the proposed scheme. Section~\ref{sec:method} gives the full pipeline, parameters and experimental setup. Section~\ref{sec:results} presents imperceptibility, robustness, hidden-layer, security and ownership results, and compares them with the base paper. Section~\ref{sec:conclusion} concludes and outlines future work.
+
+% =====================================================================
+\section{Algorithm Details}\label{sec:alg}
+
+Table~\ref{tab:notation} lists the notation used in all algorithms.
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Notation.}\label{tab:notation}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+Symbol & Meaning \\
+\midrule
+$I$, $I_R, I_G, I_B$ & Cover image ($512\times512\times3$, 8-bit) and its red, green and blue channels \\
+$\tilde I$, $I^{*}$ & Protected (marked) image; received, possibly attacked, image \\
+$LL, LH, HL, HH$ & Approximation and detail sub-bands of the one-level 2-D Haar DWT ($256\times256$ each) \\
+$A = U\Sigma V^{\top}$ & Singular value decomposition; $\Sigma=\mathrm{diag}(\sigma_1\ge\sigma_2\ge\dots)$ \\
+$S_c$, $S_W$, $S^{*}$ & Singular values of the cover LL band, of the scrambled QR, and of the received LL band (base scheme) \\
+$U_W, V_W$ & Singular vectors of the scrambled QR, kept as the extraction key (base scheme) \\
+$\alpha$ & Global embedding strength of the base scheme ($0.05$) \\
+$W$, $W_s$ & QR watermark and its scrambled version \\
+$r$, $x_0$, $x_n$ & Logistic-map parameter, initial value (secret key) and sequence $x_{n+1}=r x_n(1-x_n)$ \\
+$\pi$ & Permutation obtained by sorting the logistic sequence \\
+$M$ & QR module grid ($29\times29$, $N=841$ modules) \\
+$B$, $N_b$ & Block size in the LL band ($8$) and number of blocks ($N_b=1024$) \\
+$\Delta$, $q$ & QIM step ($183$) and quantisation index $\lfloor\sigma_1/\Delta\rfloor$ \\
+$d_k$, $s_k$ & Bit written into slot $k$; soft decision read from slot $k$ \\
+$\delta$ & Common drift of $\sigma_1 \bmod \Delta$ estimated blindly by the decoder \\
+$(n,e)$, $d$ & RSA-2048 public key (modulus, exponent) and private exponent; $K_{pub}$, $K_{priv}$ \\
+$\mathrm{fp}$ & Key fingerprint: first 8 hexadecimal digits of SHA-256 of the DER-encoded public key \\
+$\mathcal{C}$, $\sigma_{\mathcal{C}}$ & Ownership certificate and its RSA-PSS/SHA-256 signature \\
+$K_{AES}$, $IV$ & 256-bit AES key and 128-bit initialisation vector (random per message) \\
+$P$, $C$, $\ell$ & Plaintext message, ciphertext, 32-bit payload length header \\
+$\mathbf{b}$ & Payload bit stream embedded in the green channel; payload rate in bits per pixel (bpp) \\
+$\tau_j$ & Texture score of $4\times4$ block $j$: variance of its pixels with the two LSBs masked \\
+$H(\cdot)$ & SHA-256 hash \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Algorithms of the base paper}\label{sec:alg-base}
+
+\paragraph{Discrete wavelet transform.} The one-level 2-D Haar DWT splits a channel into four half-size sub-bands. With the orthonormal Haar filters, every $2\times2$ pixel group maps to one coefficient in each sub-band (Algorithm~\ref{alg:dwt}); the transform is exactly invertible. % CITATION NEEDED: wavelet transform (e.g., Mallat 1989)
+
+\begin{algorithm}[!htbp]
+\caption{One-level 2-D Haar DWT and its inverse}\label{alg:dwt}
+\begin{algorithmic}[1]
+\Require channel $X$ of size $2m\times2m$
+\Ensure sub-bands $LL, LH, HL, HH$ of size $m\times m$
+\For{$i \gets 0$ \textbf{to} $m-1$, $j \gets 0$ \textbf{to} $m-1$}
+  \State $a\gets X_{2i,2j}$, $b\gets X_{2i,2j+1}$, $c\gets X_{2i+1,2j}$, $e\gets X_{2i+1,2j+1}$
+  \State $LL_{ij}\gets (a+b+c+e)/2$; \quad $LH_{ij}\gets (a+b-c-e)/2$
+  \State $HL_{ij}\gets (a-b+c-e)/2$; \quad $HH_{ij}\gets (a-b-c+e)/2$
+\EndFor
+\State \textbf{Inverse:} $a=(LL+LH+HL+HH)/2$, $b=(LL+LH-HL-HH)/2$, $c=(LL-LH+HL-HH)/2$, $e=(LL-LH-HL+HH)/2$
+\State \Return $LL, LH, HL, HH$ \Comment{sign conventions of the detail bands follow the library (PyWavelets)}
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Singular value decomposition.} Any real matrix $A$ factors as $A=U\Sigma V^{\top}$ with orthonormal $U,V$ and non-negative singular values on the diagonal of $\Sigma$. Algorithm~\ref{alg:svd} states the decomposition through the eigen-decomposition of $A^{\top}A$; the implementation calls the LAPACK routine behind \texttt{numpy.linalg.svd}.
+
+\begin{algorithm}[!htbp]
+\caption{Singular value decomposition (conceptual)}\label{alg:svd}
+\begin{algorithmic}[1]
+\Require matrix $A\in\mathbb{R}^{m\times m}$
+\Ensure $U, \Sigma, V$ with $A=U\Sigma V^{\top}$
+\State compute the eigenpairs $(\lambda_i, \mathbf{v}_i)$ of $A^{\top}A$, sorted so that $\lambda_1\ge\lambda_2\ge\dots\ge0$
+\For{$i\gets1$ \textbf{to} $m$}
+  \State $\sigma_i\gets\sqrt{\lambda_i}$
+  \State $\mathbf{u}_i\gets A\mathbf{v}_i/\sigma_i$ \textbf{if} $\sigma_i>0$ \textbf{else} complete $U$ to an orthonormal basis
+\EndFor
+\State $U\gets[\mathbf{u}_1\dots\mathbf{u}_m]$, $\Sigma\gets\mathrm{diag}(\sigma_1,\dots,\sigma_m)$, $V\gets[\mathbf{v}_1\dots\mathbf{v}_m]$
+\State \Return $U,\Sigma,V$
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Logistic-map scrambling.} The logistic map $x_{n+1}=r x_n(1-x_n)$ is chaotic for $r$ close to 4~\cite{may1976}; sorting its first $L$ values gives a key-dependent permutation (Algorithm~\ref{alg:logistic}). The base scheme permutes the $256\times256$ QR pixels; the proposed scheme permutes the 1,024 block positions.
+
+\begin{algorithm}[!htbp]
+\caption{Logistic-map permutation (scramble and unscramble)}\label{alg:logistic}
+\begin{algorithmic}[1]
+\Require length $L$, key $(r, x_0)$, vector $\mathbf{w}$ of length $L$
+\Ensure scrambled $\mathbf{w}_s$; inverse permutation for unscrambling
+\State $x\gets x_0$
+\For{$n\gets1$ \textbf{to} $L$}
+  \State $x\gets r\,x(1-x)$; \quad $\xi_n\gets x$
+\EndFor
+\State $\pi\gets\mathrm{argsort}(\xi_1,\dots,\xi_L)$ \Comment{ascending order}
+\State $\mathbf{w}_s[n]\gets\mathbf{w}[\pi(n)]$ for $n=1..L$ \Comment{scramble}
+\State $\mathbf{w}[\pi(n)]\gets\mathbf{w}_s[n]$ for $n=1..L$ \Comment{unscramble}
+\State \Return $\mathbf{w}_s$, $\pi$
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Base-scheme embedding and extraction.} Algorithm~\ref{alg:base} reproduces the base paper's watermarking as implemented in our repository: the scrambled QR's singular values are added to those of the blue LL band, and extraction inverts this using the cover image and the stored $U_W,V_W$.
+
+\begin{algorithm}[!htbp]
+\caption{Base scheme~\cite{sanivarapu2022}: DWT--SVD embedding and non-blind extraction}\label{alg:base}
+\begin{algorithmic}[1]
+\Require cover $I$, owner text, key $(r,x_0)$, strength $\alpha$
+\Ensure marked image $\tilde I$; key $(U_W,V_W)$
+\State $W\gets$ QR code of the owner text, resized to $256\times256$, binary $\{0,255\}$
+\State $W_s\gets$ Algorithm~\ref{alg:logistic} on the pixels of $W$
+\State $(LL,LH,HL,HH)\gets\mathrm{DWT}(I_B)$; \quad $U_c\,\mathrm{diag}(S_c)\,V_c^{\top}\gets\mathrm{SVD}(LL)$
+\State $U_W\,\mathrm{diag}(S_W)\,V_W^{\top}\gets\mathrm{SVD}(W_s)$
+\State $LL'\gets U_c\,\mathrm{diag}(S_c+\alpha S_W)\,V_c^{\top}$; \quad $\tilde I_B\gets\mathrm{clip}_{[0,255]}\big(\mathrm{IDWT}(LL',LH,HL,HH)\big)$
+\State \textbf{Extraction} from $I^{*}$ (needs $I$ and $U_W,V_W$):
+\State \quad $S^{*}\gets$ singular values of $\mathrm{DWT}_{LL}(I^{*}_B)$; \quad $S_c\gets$ singular values of $\mathrm{DWT}_{LL}(I_B)$
+\State \quad $W_s^{*}\gets U_W\,\mathrm{diag}\big((S^{*}-S_c)/\alpha\big)\,V_W^{\top}$; \quad $W^{*}\gets$ unscramble $W_s^{*}$, threshold at 128
+\State \Return $\tilde I$, $(U_W,V_W)$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Algorithms added in this work}\label{sec:alg-new}
+
+\paragraph{RSA-2048.} RSA~\cite{rfc8017} provides key transport for the AES key (OAEP encryption) and the ownership signature (PSS). Algorithm~\ref{alg:rsa} summarises key generation and the two primitives; padding follows PKCS\#1 v2.2~\cite{rfc8017} as implemented in PyCryptodome.
+
+\begin{algorithm}[!htbp]
+\caption{RSA-2048: key generation, OAEP key wrapping and PSS signatures~\cite{rfc8017}}\label{alg:rsa}
+\begin{algorithmic}[1]
+\Require modulus size 2048 bits; message or AES key; document to sign
+\Ensure $(K_{pub},K_{priv})$; wrapped key; signature
+\State choose random primes $p,q$ of 1024 bits; $n\gets pq$; $\lambda\gets\mathrm{lcm}(p-1,q-1)$
+\State $e\gets65537$; \quad $d\gets e^{-1}\bmod\lambda$; \quad $K_{pub}\gets(n,e)$, $K_{priv}\gets(n,d)$
+\State \textbf{OAEP wrap:} $EM\gets\mathrm{OAEP\text{-}encode}(K_{AES})$; \quad $c\gets EM^{e}\bmod n$ \Comment{256-byte block}
+\State \textbf{OAEP unwrap:} $EM\gets c^{d}\bmod n$; \quad $K_{AES}\gets\mathrm{OAEP\text{-}decode}(EM)$
+\State \textbf{PSS sign:} $EM\gets\mathrm{PSS\text{-}encode}(H(\text{document}))$; \quad $\sigma\gets EM^{d}\bmod n$
+\State \textbf{PSS verify:} $EM\gets\sigma^{e}\bmod n$; \quad accept iff $\mathrm{PSS\text{-}verify}(EM, H(\text{document}))$
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{AES-256 in CBC mode.} The message is encrypted with AES~\cite{fips197} under a fresh random 256-bit key and 128-bit IV, using cipher-block chaining and PKCS\#7 padding (Algorithm~\ref{alg:aes}). % CITATION NEEDED: CBC mode (NIST SP 800-38A)
+\cite{TODO}
+
+\begin{algorithm}[!htbp]
+\caption{AES-256-CBC encryption and decryption~\cite{fips197}}\label{alg:aes}
+\begin{algorithmic}[1]
+\Require plaintext $P$ (bytes); for decryption, $K_{AES}$, $IV$ and $C$
+\Ensure $(K_{AES}, IV, C)$; recovered $P$
+\State $K_{AES}\gets$ 32 random bytes; \quad $IV\gets$ 16 random bytes
+\State $P'\gets\mathrm{PKCS7pad}(P,16)$; split into blocks $P_1,\dots,P_t$
+\State expand $K_{AES}$ into 15 round keys \Comment{14 rounds for a 256-bit key}
+\State $C_0\gets IV$
+\For{$i\gets1$ \textbf{to} $t$}
+  \State $C_i\gets\mathrm{AES}_{K}(P_i\oplus C_{i-1})$ \Comment{SubBytes, ShiftRows, MixColumns, AddRoundKey}
+\EndFor
+\State \textbf{Decrypt:} $P_i\gets\mathrm{AES}^{-1}_{K}(C_i)\oplus C_{i-1}$; \quad $P\gets\mathrm{PKCS7unpad}(P_1\|\dots\|P_t)$
+\State \Return $(K_{AES}, IV, C_1\|\dots\|C_t)$
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Hybrid payload and texture-ranked LSB.} The AES key is wrapped with RSA-OAEP and the payload is framed with a 32-bit length header (Algorithm~\ref{alg:payload}). Its bits replace the least significant bits of green-channel pixels in the most textured $4\times4$ blocks first (Algorithm~\ref{alg:lsb}). The ranking ignores the two LSBs, so the receiver recomputes exactly the same order from the stego image.
+
+\begin{algorithm}[!htbp]
+\caption{Hybrid payload construction and recovery}\label{alg:payload}
+\begin{algorithmic}[1]
+\Require message $P$; receiver key $K_{pub}$ (or $K_{priv}$ to recover)
+\Ensure bit stream $\mathbf{b}$; recovered $P$
+\State $(K_{AES},IV,C)\gets$ Algorithm~\ref{alg:aes}$(P)$
+\State $c_K\gets\mathrm{OAEP\text{-}wrap}_{K_{pub}}(K_{AES})$ \Comment{Algorithm~\ref{alg:rsa}, 256 bytes}
+\State $\text{blob}\gets c_K\,\|\,IV\,\|\,C$; \quad $\ell\gets|\text{blob}|$
+\State $\mathbf{b}\gets$ bits of $(\ell$ as 4 bytes$)\,\|\,\text{blob}$ \Comment{54-byte message $\rightarrow$ 340 bytes $=$ 2{,}720 bits}
+\State \textbf{Recover:} read $\ell$, take $\ell$ bytes, split $c_K, IV, C$; $K_{AES}\gets\mathrm{OAEP\text{-}unwrap}_{K_{priv}}(c_K)$; decrypt $C$
+\State \Return $\mathbf{b}$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[!htbp]
+\caption{Texture-ranked LSB embedding and extraction (green channel)}\label{alg:lsb}
+\begin{algorithmic}[1]
+\Require green channel $G$ ($512\times512$), bit stream $\mathbf{b}$ of length $L$
+\Ensure stego channel $\tilde G$; extracted bits
+\For{each $4\times4$ block $j$ of $G$}
+  \State $\tau_j\gets\mathrm{Var}\big(G_j \wedge \mathtt{0xFC}\big)$ \Comment{two LSBs masked, so ranking survives embedding}
+\EndFor
+\State order blocks by decreasing $\tau_j$; list their pixels block by block, row by row: $p_1,p_2,\dots$
+\For{$k\gets1$ \textbf{to} $L$}
+  \State $\tilde G[p_k]\gets (G[p_k]\wedge\mathtt{0xFE})\vee b_k$
+\EndFor
+\State \textbf{Extract:} recompute the same order on $\tilde G$; $b_k\gets\tilde G[p_k]\wedge 1$ for $k=1..L$
+\State \Return $\tilde G$
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Proposed blind watermark.} Algorithm~\ref{alg:qim} embeds the QR modules into the largest singular value of each $8\times8$ block of the blue LL band. The 841 modules are repeated cyclically to fill all 1,024 blocks (183 modules receive a second copy), and the block order is scrambled with the logistic map. Algorithm~\ref{alg:extract} reads the bits back blindly. It estimates any common drift of $\sigma_1$ (for example, the upward shift caused by additive noise) from the image itself, since both QIM centres coincide after doubling the phase. It then combines the copies of each module. If the QR code does not decode, it retries after a $3\times3$ median filter, which removes impulse noise, and after small shifts that re-synchronise the block grid.
+
+\begin{algorithm}[!htbp]
+\caption{Proposed watermark embedding (blind QIM on block singular values)}\label{alg:qim}
+\begin{algorithmic}[1]
+\Require cover $I$, owner text, $K_{pub}$, key $(r,x_0)$, step $\Delta$, block size $B$
+\Ensure marked blue channel $\tilde I_B$
+\State $\mathrm{fp}\gets$ first 8 hex digits of $H(\mathrm{DER}(K_{pub}))$
+\State $M\gets$ QR modules of ``owner text $|$ pk:fp'', error correction H, no quiet zone \Comment{$29\times29$}
+\State $(LL,LH,HL,HH)\gets\mathrm{DWT}(I_B)$; split $LL$ into $N_b=(256/B)^2$ blocks $L_1,\dots,L_{N_b}$
+\State $\mathbf{m}\gets$ cyclic repetition of $\mathrm{vec}(M)$ to length $N_b$
+\State $\pi\gets$ Algorithm~\ref{alg:logistic} with $L=N_b$; \quad $d_{\pi(k)}\gets m_k$ for $k=1..N_b$
+\For{$k\gets1$ \textbf{to} $N_b$}
+  \State $U\,\mathrm{diag}(\sigma_1,\dots,\sigma_B)\,V^{\top}\gets\mathrm{SVD}(L_k)$
+  \State $q\gets\lfloor\sigma_1/\Delta\rfloor$; \quad $\sigma_1\gets\big(q+\tfrac14+\tfrac12 d_k\big)\Delta$
+  \State $L_k\gets U\,\mathrm{diag}(\sigma_1,\dots,\sigma_B)\,V^{\top}$
+\EndFor
+\State $\tilde I_B\gets\mathrm{round}\big(\mathrm{clip}_{[0,255]}(\mathrm{IDWT}(LL,LH,HL,HH))\big)$
+\State \Return $\tilde I_B$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[!htbp]
+\caption{Proposed blind extraction and decoding}\label{alg:extract}
+\begin{algorithmic}[1]
+\Require received image $I^{*}$, certificate parameters $(r,x_0,\Delta,B)$, module grid size $N$
+\Ensure QR text or \textsc{none}
+\For{each shift $(\Delta y,\Delta x)\in\{-4..4\}^2$ by increasing $|\Delta y|+|\Delta x|$} \Comment{grid re-synchronisation}
+  \For{pre-filter $\in\{\text{none}, \text{median }3\times3\}$}
+    \State $J\gets$ pre-filtered $I^{*}$ shifted back by $(\Delta y,\Delta x)$
+    \State $f_k\gets\big(\sigma_1(L_k)\bmod\Delta\big)/\Delta$ for the blocks of $\mathrm{DWT}_{LL}(J_B)$
+    \State $\theta\gets\arg\big(\tfrac{1}{N_b}\sum_k e^{\,\mathrm{j}4\pi f_k}\big)$; \quad $\delta\gets\mathrm{wrap}_{[-1/4,1/4)}\big((\theta-\pi)/(4\pi)\big)$ \Comment{blind drift}
+    \State $s_k\gets\cos\big(2\pi(f_k-\delta-\tfrac34)\big)$ \Comment{$+1$ at bit-1 centre, $-1$ at bit-0 centre}
+    \State $\hat m_i\gets\big[\sum_{k:\,k\equiv i \,(\mathrm{mod}\,N)} s_{\pi(k)}>0\big]$ for $i=1..N$ \Comment{unscramble, combine copies}
+    \If{the QR decoder reads text $t$ from $\hat M$} \Return $t$ \EndIf
+  \EndFor
+\EndFor
+\State \Return \textsc{none}
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Ownership certificate.} The owner signs a certificate that names the scheme and the parameters needed to read the watermark (Algorithm~\ref{alg:cert}). A claim is accepted only if three checks pass. The signature must verify under the presented public key, the key's fingerprint must equal the one in the certificate, and the QR code extracted with the certified parameters must decode to exactly the certified text. An attacker can sign a certificate for their own key and parameters, but those parameters do not make the owner's image yield the attacker's QR code.
+
+\begin{algorithm}[!htbp]
+\caption{Certificate signing and ownership verification}\label{alg:cert}
+\begin{algorithmic}[1]
+\Require owner text, $(K_{pub},K_{priv})$, parameters $(r,x_0,\Delta,B,N)$; for verification: $I^{*}$, $\mathcal{C}$, $\sigma_{\mathcal{C}}$, presented $K_{pub}$
+\Ensure $(\mathcal{C},\sigma_{\mathcal{C}})$; accept or reject
+\State $\mathcal{C}\gets\{\text{owner}, \mathrm{fp}(K_{pub}), x_0, r, \Delta, B, N, \text{scheme id}\}$ serialised as canonical JSON
+\State $\sigma_{\mathcal{C}}\gets\mathrm{PSS\text{-}sign}_{K_{priv}}(\mathcal{C})$ \Comment{Algorithm~\ref{alg:rsa}}
+\State \textbf{Verify:}
+\State \quad \textbf{if not} $\mathrm{PSS\text{-}verify}_{K_{pub}}(\mathcal{C},\sigma_{\mathcal{C}})$ \textbf{then} reject (signature invalid)
+\State \quad \textbf{if} $\mathrm{fp}(K_{pub})\neq\mathcal{C}.\mathrm{fp}$ \textbf{then} reject (key mismatch)
+\State \quad $t\gets$ Algorithm~\ref{alg:extract}$(I^{*},\mathcal{C})$
+\State \quad \textbf{if} $t=$ ``$\mathcal{C}$.owner $|$ pk:$\mathcal{C}$.fp'' \textbf{then} accept \textbf{else} reject
+\end{algorithmic}
+\end{algorithm}
+
+% =====================================================================
+\section{Methodology}\label{sec:method}
+
+\subsection{Proposed pipeline}
+
+\paragraph{Protection (sender).}
+\begin{enumerate}
+  \item Load the $512\times512$ colour cover. The red channel is never modified.
+  \item \emph{Watermark layer, blue channel:} build the QR code from the owner text and the fingerprint of the owner's RSA public key, scramble the block order with the logistic key, and embed by QIM (Algorithm~\ref{alg:qim}).
+  \item \emph{Certificate:} sign the reading parameters with the owner's RSA private key (Algorithm~\ref{alg:cert}) and register the certificate.
+  \item \emph{Message layer, green channel:} encrypt the message with AES-256-CBC, wrap the AES key for the receiver with RSA-2048-OAEP, frame the payload (Algorithm~\ref{alg:payload}) and embed it by texture-ranked LSB (Algorithm~\ref{alg:lsb}).
+  \item Save the protected image losslessly (PNG): any lossy re-encoding destroys the LSB layer.
+\end{enumerate}
+
+\paragraph{Verification and recovery (receiver or verifier).}
+\begin{enumerate}
+  \item \emph{Ownership:} given the image, a certificate and a public key, run Algorithm~\ref{alg:cert}. No cover image and no singular vectors are needed.
+  \item \emph{Message:} recompute the texture ranking of the green channel, read the payload bits, unwrap the AES key with the receiver's RSA private key and decrypt.
+\end{enumerate}
+
+Figure~\ref{fig:flow} shows both sides.
+
+\begin{figure}[!htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[>=Stealth, node distance=0.42cm,
+  st/.style={draw, rounded corners=2pt, align=center, font=\footnotesize, minimum width=3.3cm, minimum height=0.75cm, inner sep=3pt},
+  wb/.style={st, fill=blue!8, draw=blue!60},
+  gb/.style={st, fill=green!8, draw=green!50!black},
+  cb/.style={st, fill=yellow!15, draw=orange!70!black},
+  ib/.style={st, fill=gray!12},
+  dec/.style={draw, diamond, aspect=2.4, align=center, font=\footnotesize, inner sep=1pt, fill=white}]
+  % ---- sender
+  \node[font=\bfseries\small] (S) at (0,0.9) {Protection (sender)};
+  \node[ib] (c) at (0,0) {Cover image $I$};
+  \node[wb, below left=0.55cm and -0.6cm of c] (w1) {Owner text + fp$(K_{pub})$\\$\rightarrow$ QR $29{\times}29$, ECC H};
+  \node[wb, below=of w1] (w2) {Haar DWT of $I_B$\\LL $\rightarrow$ 1{,}024 blocks $8{\times}8$};
+  \node[wb, below=of w2] (w3) {Cyclic repeat + logistic\\permutation $\pi(r,x_0)$};
+  \node[wb, below=of w3] (w4) {QIM on $\sigma_1$ of each block\\step $\Delta=183$; IDWT};
+  \node[gb, below right=0.55cm and -0.6cm of c] (g1) {Message $P$};
+  \node[gb, below=of g1] (g2) {AES-256-CBC$(P)$\\random $K_{AES}$, $IV$};
+  \node[gb, below=of g2] (g3) {RSA-2048-OAEP wrap $K_{AES}$\\frame with length header};
+  \node[gb, below=of g3] (g4) {Rank $4{\times}4$ blocks of $I_G$\\LSB embed, 0.10 bpp};
+  \node[cb, below=0.5cm of w4] (cert) {Sign certificate $\mathcal{C}$\\RSA-PSS/SHA-256};
+  \node[ib, below=0.5cm of g4] (out) {Protected image $\tilde I$ (PNG)};
+  \draw[->] (c) -| (w1); \draw[->] (c) -| (g1);
+  \draw[->] (w1)--(w2); \draw[->] (w2)--(w3); \draw[->] (w3)--(w4); \draw[->] (w4)--(cert);
+  \draw[->] (g1)--(g2); \draw[->] (g2)--(g3); \draw[->] (g3)--(g4); \draw[->] (g4)--(out);
+  \draw[->] (w4.east) -- ++(0.35,0) |- (out.west);
+  % ---- receiver
+  \node[font=\bfseries\small] (R) at (14.2,0.9) {Verification and recovery};
+  \node[ib] (r0) at (14.2,0) {Received image $I^{*}$};
+  \node[cb, below left=0.55cm and -0.6cm of r0] (v1) {Verify PSS signature\\and fingerprint};
+  \node[wb, below=of v1] (v2) {Blind extraction (Alg.~\ref{alg:extract})\\drift, median, shift search};
+  \node[dec, below=of v2] (v3) {QR text $=$\\certified text?};
+  \node[cb, below=0.5cm of v3, xshift=-1.0cm, minimum width=1.6cm] (acc) {Accept};
+  \node[st, below=0.5cm of v3, xshift=1.0cm, minimum width=1.6cm, fill=red!8, draw=red!60] (rej) {Reject};
+  \node[gb, below right=0.55cm and -0.6cm of r0] (m1) {Recompute texture ranking\\read LSBs, parse $\ell$};
+  \node[gb, below=of m1] (m2) {RSA-OAEP unwrap $K_{AES}$\\with $K_{priv}$};
+  \node[gb, below=of m2] (m3) {AES-256-CBC decrypt\\$\rightarrow$ message $P$};
+  \draw[->] (r0) -| (v1); \draw[->] (r0) -| (m1);
+  \draw[->] (v1)--(v2); \draw[->] (v2)--(v3); \draw[->] (v3) -- node[left,font=\scriptsize]{yes} (acc); \draw[->] (v3) -- node[right,font=\scriptsize]{no} (rej);
+  \draw[->] (m1)--(m2); \draw[->] (m2)--(m3);
+  \draw[dashed, ->, orange!70!black] (cert.south) -- ++(0,-0.45) -| (8.75,-1.2) |- (v1.west);
+  \coordinate (xo) at (8.25,0); \draw[dashed, ->] (out.east) -- (out.east -| xo) |- (r0.west);
+\end{tikzpicture}}
+\caption{Methodology flowchart. Left: protection, with the watermark (blue boxes) and message (green boxes) layers and the signed certificate (yellow). Right: ownership verification and message recovery. Dashed arrows: the certificate and the image travel to the verifier.}
+\label{fig:flow}
+\end{figure}
+
+\subsection{Parameters, dataset and setup}
+
+Tables~\ref{tab:params}--\ref{tab:setup} list the configuration, the test images and the experimental setup. The proposed QIM step was chosen so that the proposed image's mean PSNR matches the base scheme's, so robustness is compared at equal image quality.
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Configuration of both schemes.}\label{tab:params}
+\begin{tabularx}{\textwidth}{@{}lXX@{}}
+\toprule
+Item & Base scheme (A), reproduced from~\cite{sanivarapu2022} & Proposed \\
+\midrule
+Watermark & $256\times256$ QR of owner text & $29\times29$-module QR, error correction H: owner text $+$ 8-hex key fingerprint \\
+Scrambling & logistic map, $r=3.9999$, $x_0=0.12345$, on QR pixels & same map and key, on block positions \\
+Embedding & blue channel, Haar DWT, SVD of LL, $S'=S+\alpha S_W$, $\alpha=0.05$ & blue channel, Haar DWT, QIM on $\sigma_1$ of each $8\times8$ LL block, $\Delta=183$, all 1{,}024 blocks \\
+Extraction & non-blind: cover image $+$ $U_W,V_W$ & blind: image $+$ certificate; median and $\pm4$\,px shift retries \\
+Ownership proof & QR decodes & RSA-PSS/SHA-256 certificate verifies and matches the extracted QR \\
+Hidden layer & none & AES-256-CBC, RSA-2048-OAEP key wrap, texture-ranked LSB, green channel, 0.10\,bpp \\
+Key sizes & -- & RSA 2048 bits; AES 256 bits; IV 128 bits; SHA-256 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Test images and attacks.}\label{tab:data}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+Test images & Airplane, Boat, Einstein, Girl, House, House~2, Lake, Lena, Mandrill, Mona Lisa, Peppers, Tree ($512\times512\times3$, 8-bit; the 12 images of~\cite{sanivarapu2022}; Peppers is used in the figures). Steganalysis: 494 $128\times128$ green-channel patches from 11 of these images and 13 further standard images. \\
+Attacks & JPEG $Q=90,70,50$; Gaussian noise $v=0.001, 0.01$; salt \& pepper $d=0.01$; $3\times3$ mean blur; centre blanking (central $\tfrac14\times\tfrac14$ of the image $=6.25\%$ of its area); scaling $0.5\times$ then back to $512\times512$; rotation $2^\circ$; translation 2\,px \\
+Metrics & PSNR, SSIM; QR decodability, BER, NCC (as defined in~\cite{sanivarapu2022}); payload BER and message recovery; RS estimate and SPAM detector error $P_E$~\cite{pevny2010spam}; entropy, $\chi^2$, adjacent-pixel correlation, NPCR/UACI; ownership-claim acceptance \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Experimental setup.}\label{tab:setup}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+Hardware & Linux cloud container, Intel Xeon @ 2.10\,GHz, 2 vCPU, 7\,GB RAM; timings on one core % TODO: confirm this matches the machine of the reported run
+\\
+Language & Python 3 \\
+Libraries & NumPy, OpenCV, PyWavelets (Haar DWT), scikit-image (SSIM), SciPy, scikit-learn (random forest), PyCryptodome (AES, RSA-OAEP, RSA-PSS), qrcode and pyzbar (QR generation and decoding), pandas, Matplotlib \\
+Code & \url{https://github.com/nandikaagarwall/Hybrid-Image-Security} (scripts \texttt{paper/run\_*.py}) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% =====================================================================
+\section{Results and Comparison}\label{sec:results}
+
+All results are means over the 12 test images unless stated otherwise. ``A'' denotes the base scheme as reproduced by us under exactly the same images, attacks and metrics as the proposed scheme.
+
+\FloatBarrier
+\subsection{Imperceptibility}\label{sec:res-imp}
+
+Table~\ref{tab:imp} gives PSNR and SSIM per image. With both layers embedded, the proposed image has a mean PSNR of $40.19\pm0.24$\,dB, against $40.12\pm0.04$\,dB for the base scheme carrying the watermark alone. The base paper reports $42.45$\,dB; our reproduction keeps its published $\alpha=0.05$, which gives $40.12$\,dB on our implementation. The hidden message costs almost nothing in quality: the green channel stays at $61.14$\,dB.
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Imperceptibility of the protected images (PSNR in dB). The proposed image carries the watermark (blue) and a 0.10\,bpp encrypted message (green). Base-paper values from its Table~2.}\label{tab:imp}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+Image & Base paper (reported) & A: PSNR & A: SSIM & Proposed: PSNR & Proposed: SSIM & Proposed: green PSNR \\
+\midrule
+Airplane & 41.81 & 40.15 & 0.9934 & 40.04 & 0.9876 & 61.18 \\
+Boat & 42.65 & 40.13 & 0.9963 & 40.03 & 0.9923 & 61.15 \\
+Einstein & 43.36 & 40.08 & 0.9968 & 40.21 & 0.9917 & 61.17 \\
+Girl & 42.85 & 40.14 & 0.9881 & 40.44 & 0.9877 & 61.13 \\
+House & 42.25 & 40.10 & 0.9917 & 40.74 & 0.9901 & 61.14 \\
+House 2 & 41.74 & 40.11 & 0.9958 & 40.20 & 0.9916 & 61.09 \\
+Lake & 41.68 & 40.07 & 0.9971 & 40.05 & 0.9918 & 61.17 \\
+Lena & 42.22 & 40.14 & 0.9953 & 40.13 & 0.9912 & 61.12 \\
+Mandrill & 43.12 & 40.11 & 0.9984 & 40.00 & 0.9965 & 61.09 \\
+Mona Lisa & 43.81 & 40.10 & 0.9865 & 39.85 & 0.9863 & 61.18 \\
+Peppers & 40.35 & 40.21 & 0.9944 & 40.42 & 0.9898 & 61.13 \\
+Tree & 43.56 & 40.12 & 0.9956 & 40.21 & 0.9915 & 61.12 \\
+\midrule
+Mean $\pm$ SD & $42.45\pm0.98$ & $40.12\pm0.04$ & $0.9941\pm0.0036$ & $40.19\pm0.24$ & $0.9907\pm0.0027$ & $61.14\pm0.03$ \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+Figure~\ref{fig:visual} shows the cover, the base-scheme image and the proposed image, with amplified difference images. Neither marked image shows visible artefacts. The difference images show where each layer acts. The base scheme's change follows the image's edges. The proposed watermark is spread evenly over the $16\times16$-pixel blocks that correspond to $8\times8$ LL blocks. The hidden bits sit on edges and textured regions, where the texture ranking places them.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{F01_visual_quality}
+\caption{Visual quality (Peppers). Top: cover, base scheme (A) and proposed image with PSNR/SSIM. Bottom: absolute differences from the cover, amplified $\times10$ for the blue channel (watermark) and $\times255$ for the green channel (hidden message, where every change is $\pm1$).}
+\label{fig:visual}
+\end{figure}
+
+Figure~\ref{fig:hist} examines the histograms of the embedded channels only, because the full RGB histogram cannot resolve changes of this size. On Peppers, the base scheme changes 89.2\% of blue pixels and shifts their mean upward by $+2.91$ grey levels, so its histogram is visibly displaced (middle row). The proposed watermark changes 84.1\% of blue pixels with a mean change of $-0.15$, so its histogram is centred on the cover's. The hidden message changes 5.03\% of green pixels, each by exactly $\pm1$ (bottom row, right).
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{F02_histograms}
+\caption{Histograms of the embedded channels (Peppers; cover in grey). Top: full range. Middle: zoom on values 100--123. Bottom: difference histogram, marked minus cover (log scale). Columns: base scheme blue channel, proposed blue channel (watermark), proposed green channel (hidden message).}
+\label{fig:hist}
+\end{figure}
+
+Figure~\ref{fig:corr} plots adjacent-pixel pairs of the embedded channels in the horizontal, vertical and diagonal directions. For Peppers, the correlation coefficients of the blue channel change from $0.9665$, $0.9664$ and $0.9478$ to $0.9666$, $0.9665$ and $0.9477$, and those of the green channel ($0.9811$, $0.9818$ and $0.9687$) do not change at four decimals. Embedding therefore leaves the local structure of the image intact, which is what an imperceptible scheme should show.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.85\textwidth]{F03_pixel_correlation}
+\caption{Adjacent-pixel correlation of the embedded channels, cover vs proposed (Peppers; 3{,}000 random pixel pairs at the same positions in every panel; $r$ computed over all pairs).}
+\label{fig:corr}
+\end{figure}
+
+\FloatBarrier
+\subsection{Robustness}\label{sec:res-rob}
+
+Table~\ref{tab:rob} reports, for each attack, how many of the 12 images still yield a decodable QR code, together with BER and NCC. Decodability is the primary measure. With the base scheme's extractor, an image that was never watermarked still scores NCC $=0.426$ (BER $54.1\%$, 0/12 decodable), so NCC values in the 0.4--0.8 range do not indicate a recovered watermark.
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Robustness under attack (12 images). BER for A is over QR pixels ($256\times256$), for the proposed scheme over QR modules ($29\times29$). Bold: more images decoded. ``Owner'' = ownership claim verified; ``Msg'' = hidden message recovered.}\label{tab:rob}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lccccccccc@{}}
+\toprule
+& & \multicolumn{3}{c}{Base scheme (A)} & \multicolumn{5}{c}{Proposed} \\
+\cmidrule(lr){3-5}\cmidrule(lr){6-10}
+Attack & PSNR (dB) & Decodes & BER\% & NCC & Decodes & BER\% & NCC & Owner & Msg \\
+\midrule
+No attack & -- & 12/12 & 0.0 & 1.000 & 12/12 & 0.0 & 1.000 & 12/12 & 12/12 \\
+JPEG $Q=90$ & 33.62 & 12/12 & 5.5 & 0.947 & 12/12 & 0.0 & 1.000 & 12/12 & 0/12 \\
+JPEG $Q=70$ & 31.72 & 8/12 & 14.4 & 0.901 & \textbf{12/12} & 0.2 & 0.997 & 12/12 & 0/12 \\
+JPEG $Q=50$ & 30.68 & 8/12 & 16.1 & 0.886 & \textbf{12/12} & 0.9 & 0.991 & 12/12 & 0/12 \\
+Gaussian $v=0.001$ & 29.62 & 12/12 & 0.0 & 0.998 & 12/12 & 0.0 & 1.000 & 12/12 & 0/12 \\
+Gaussian $v=0.01$ & 20.20 & \textbf{12/12} & 1.4 & 0.989 & 0/12 & 8.7 & 0.908 & 0/12 & 0/12 \\
+Salt \& pepper $d=0.01$ & 20.35 & \textbf{12/12} & 3.0 & 0.979 & 9/12 & 7.9 & 0.918 & 9/12 & 0/12 \\
+Mean blur $3\times3$ & 30.62 & 1/12 & 52.4 & 0.608 & \textbf{11/12} & 0.6 & 0.993 & 11/12 & 0/12 \\
+Centre blanking 6.25\% & 16.99 & 0/12 & 42.5 & 0.559 & \textbf{12/12} & 2.2 & 0.977 & 12/12 & 4/12 \\
+Scaling $0.5\times$ & 30.24 & 2/12 & 53.7 & 0.604 & \textbf{11/12} & 0.3 & 0.996 & 11/12 & 0/12 \\
+Rotation $2^\circ$ & 17.43 & 0/12 & 28.9 & 0.782 & 0/12 & 41.4 & 0.568 & 0/12 & 0/12 \\
+Translation 2\,px & 19.60 & 12/12 & 0.1 & 0.999 & 12/12 & 1.3 & 0.987 & 12/12 & 0/12 \\
+\midrule
+Total (11 attacks) & & 79/132 & & & \textbf{103/132} & & & 103/132 & 4/132 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+The proposed watermark decodes on more images than the base scheme under five attacks and ties under four. It decodes on fewer images under heavy Gaussian noise and salt \& pepper. Neither scheme survives a $2^\circ$ rotation, which moves pixels near the image corners by about 13 pixels ($2\cdot362\cdot\sin 1^\circ$), beyond the decoder's $\pm4$\,px search. Wherever the QR code decodes, the ownership claim also verifies. The hidden message survives only the clean channel and, on 4 images, centre blanking (its bits lie outside the blanked area). This is expected for spatial-domain LSB embedding, so the protected image must be shared losslessly.
+
+Figure~\ref{fig:grid} shows the QR codes extracted by both schemes from the attacked Peppers image. Under blur, centre blanking and rescaling, the base scheme returns noise while the proposed scheme returns a readable code. Under heavy Gaussian noise the proposed code has a module BER of 10.7\% and does not decode.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=\textwidth]{F04_attack_grid}
+\caption{Attacked proposed images (top) and the QR codes extracted by the base scheme (middle) and the proposed scheme (bottom), with BER and decodability (\checkmark/$\times$). Peppers.}
+\label{fig:grid}
+\end{figure}
+
+Figure~\ref{fig:strength} sweeps the attack strength. Under JPEG the proposed watermark decodes on all 12 images down to $Q=50$ and on 8 at $Q=40$, while the base scheme loses images from $Q=80$ (10/12) onward. Under Gaussian noise the proposed watermark holds 12/12 up to $v=0.002$ and 11/12 at $v=0.005$, then fails; the base scheme holds 12/12 throughout. Under salt \& pepper the proposed watermark stays at 9--10 of 12 up to $d=0.05$.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=\textwidth]{F05_robustness_vs_strength}
+\caption{Share of the 12 images whose QR code decodes as attack strength grows (JPEG quality, Gaussian noise variance, salt \& pepper density).}
+\label{fig:strength}
+\end{figure}
+
+\FloatBarrier
+\subsection{Imperceptibility--robustness trade-off}\label{sec:res-trade}
+
+The noise weakness follows from the chosen operating point. Figure~\ref{fig:trade} varies the embedding strength of both schemes. At a QIM step of 240 (PSNR $37.73$\,dB), the proposed watermark decodes on 12/12 images under JPEG-70, Gaussian $v=0.01$ and salt \& pepper alike. The base scheme needs $\alpha=0.10$ (PSNR $33.81$\,dB) to reach 12/12 under JPEG-70, and has only 8/12 at its published $\alpha=0.05$.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=\textwidth]{F06_tradeoff}
+\caption{Share of images whose QR code decodes against the PSNR of the marked image, varying $\alpha$ for the base scheme and the QIM step for the proposed scheme (12 images). Dotted line: the 40\,dB operating point of Tables~\ref{tab:imp}--\ref{tab:rob}.}
+\label{fig:trade}
+\end{figure}
+
+\FloatBarrier
+\subsection{Hidden layer: capacity and detectability}\label{sec:res-hidden}
+
+Table~\ref{tab:hidden} and Figure~\ref{fig:hidden} evaluate the green-channel layer from 0.05 to 0.40\,bpp; the real 340-byte payload is padded with random bits to each rate. The message is recovered in all 55 clean runs. Texture-ranked and random placement give the same PSNR, since both change about half of the used pixels by one level. They differ in detectability. RS analysis, which recovers the payload of random LSB embedding almost exactly (0.404 for a true 0.40\,bpp), estimates only 0.199 for texture-ranked embedding. The learned SPAM detector~\cite{pevny2010spam} also errs more often on texture-ranked embedding ($P_E=0.397$ vs $0.348$ at 0.10\,bpp). This result is preliminary: it uses 494 patches, and a full evaluation on BOSSbase~\cite{bas2011boss} remains to be done.
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Hidden-layer capacity and detectability. RS estimate: embedding rate inferred by RS analysis (0.022 on unmodified covers; closer to the true rate means easier to detect). $P_E$: detection error of SPAM-686 features with a random forest (0.5 = undetectable). PSNR and recovery over 11 images; RS over 12.}\label{tab:hidden}
+\begin{tabular}{@{}cccccccc@{}}
+\toprule
+& & & & \multicolumn{2}{c}{RS estimate} & \multicolumn{2}{c}{$P_E$} \\
+\cmidrule(lr){5-6}\cmidrule(lr){7-8}
+bpp & Bits & Green PSNR (dB) & Recovered & Ours & Random LSB & Ours & Random LSB \\
+\midrule
+0.05 & 13{,}107 & 64.15 & 11/11 & \textbf{0.034} & 0.061 & -- & -- \\
+0.10 & 26{,}214 & 61.13 & 11/11 & \textbf{0.049} & 0.112 & \textbf{0.397} & 0.348 \\
+0.20 & 52{,}428 & 58.13 & 11/11 & \textbf{0.083} & 0.209 & \textbf{0.374} & 0.336 \\
+0.30 & 78{,}643 & 56.38 & 11/11 & \textbf{0.130} & 0.305 & -- & -- \\
+0.40 & 104{,}857 & 55.12 & 11/11 & \textbf{0.199} & 0.404 & \textbf{0.338} & 0.299 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=\textwidth]{F07_hidden_layer}
+\caption{Hidden layer. Left: green-channel PSNR against payload. Centre: RS-estimated against true payload (dotted: perfect estimate). Right: SPAM detector error (dotted: undetectable).}
+\label{fig:hidden}
+\end{figure}
+
+\FloatBarrier
+\subsection{Security of the cryptographic components}\label{sec:res-sec}
+
+Table~\ref{tab:sec} summarises the randomness and key-sensitivity tests. The AES-256-CBC ciphertext has an entropy of $7.9975$ bits per byte and a byte-histogram $\chi^2$ of $227.9$, below the 5\% critical value of $293.25$, so it is statistically indistinguishable from uniform. A one-bit change in the first plaintext byte changes $99.60\%$ of ciphertext bytes (UACI $33.35\%$), and a one-bit change in the key changes $99.61\%$ of the decrypted bytes. These figures are measured on 64\,KiB of ciphertext because the 64-byte message alone is too short for byte statistics. A change in the \emph{last} plaintext byte changes only $0.02\%$ of the ciphertext, since CBC propagates changes forward only.
+
+For the watermark key, changing $x_0$ by $10^{-10}$ yields a module BER of $0.474$ and no QR code (Figure~\ref{fig:scramble}), and none of 300 random $(r,x_0)$ keys yields any decodable QR code from a marked image, even with the full decoder including shift search. Logistic-map scrambling removes the correlation of the QR code (horizontal $0.884\rightarrow-0.001$). Because it is a permutation, however, it leaves the histogram and entropy unchanged and is known to be breakable by chosen-plaintext attacks~\cite{TODO}. % CITATION NEEDED: cryptanalysis of permutation-only ciphers (e.g., Jolfaei, Wu and Muthukkumarasamy, IEEE TIFS 2016)
+In our scheme it serves to spread burst errors and to key the bit positions; confidentiality rests on AES and RSA.
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Security tests of the encryption and scrambling components.}\label{tab:sec}
+\begin{tabularx}{\textwidth}{@{}p{3.1cm}X>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{2.2cm}@{}}
+\toprule
+Component & Test & Value & Ideal \\
+\midrule
+AES-256-CBC & Entropy (bits/byte) & 7.9975 & 8 \\
+AES-256-CBC & $\chi^2$ of byte histogram & 227.9 & $<293.25$ \\
+AES-256-CBC & Adjacent-byte correlation H / V / D & $-0.013$ / $0.004$ / $-0.011$ & 0 \\
+AES-256-CBC & NPCR / UACI, 1-bit change in the first byte & 99.60\% / 33.35\% & 99.61\% / 33.46\% \\
+AES-256-CBC & Bytes changed by a 1-bit change in the key & 99.61\% & $\approx$99.6\% \\
+Logistic map (QR pixels) & Correlation H / V / D, plain $\rightarrow$ scrambled & $0.884\rightarrow-0.001$ / $0.866\rightarrow-0.003$ / $0.757\rightarrow0.013$ & $\rightarrow0$ \\
+Logistic key, base scheme & Watermark BER with $x_0+10^{-10}$ & 0.497 & 0.5 \\
+Logistic key, proposed & Module BER with $x_0+10^{-10}$ & 0.474 (no QR) & 0.5 \\
+Proposed watermark key & Random keys giving any decodable QR & 0 of 300 & 0 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=\textwidth]{F08_scrambling_key_sensitivity}
+\caption{Proposed watermark: the QR code (owner text $+$ public-key fingerprint), its scrambled layout over the 1{,}024 LL blocks, the QR code extracted with the correct key, and with $x_0$ changed by $10^{-10}$.}
+\label{fig:scramble}
+\end{figure}
+
+\FloatBarrier
+\subsection{Ownership verification}\label{sec:res-own}
+
+Table~\ref{tab:own} reports the ownership tests, and Figure~\ref{fig:own} shows the central one. Against the base scheme, an attacker generates a QR code of their own identity, scrambles it with the same map, and presents its singular vectors as their key. Applied to the owner's image, these vectors extract the attacker's QR code, which decodes on 12/12 images. Against the proposed scheme, the attacker presents a correctly signed certificate for their own key and parameters. Blind extraction with those parameters yields no QR code on any image, so the claim is rejected (0/12). Editing the owner's certificate breaks its signature, and re-signing the owner's parameters with the attacker's key fails because the QR text in the image carries the owner's fingerprint. Neither scheme accepts a claim on an image that was never watermarked.
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Ownership-verification tests (12 images each).}\label{tab:own}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Claim & A: accepted & Proposed: accepted & Correct \\
+\midrule
+Real owner claims the marked image & 12/12 & 12/12 & accept \\
+Attacker presents own keys (false-ownership attack) & 12/12 & \textbf{0/12} & reject \\
+Owner's certificate with the owner field edited & no certificate & 0/12 & reject \\
+Owner's parameters re-signed with the attacker's key & no certificate & 0/12 & reject \\
+Owner's claim on an unmarked image & 0/12 & 0/12 & reject \\
+Owner's claim on an unmarked image after JPEG-90 & -- & 0/12 & reject \\
+Attacker re-watermarks the image with their own mark & -- & attacker 12/12, owner 0/12 & see text \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.88\textwidth]{F09_ownership_attack}
+\caption{False-ownership attack. Top: base scheme; the attacker's own singular vectors extract the attacker's QR code from the owner's image. Bottom: proposed scheme; the owner's certificate verifies, and the attacker's own signed certificate yields no QR code.}
+\label{fig:own}
+\end{figure}
+
+The last row of Table~\ref{tab:own} is a limitation. An attacker who re-embeds their own proposed-scheme watermark over the owner's (PSNR about 40\,dB against the cover) replaces it, because both marks use the same blocks. No blind scheme prevents this on its own. The standard remedy is a trusted timestamp on the signed certificate, so that the first registration wins~\cite{TODO}. % CITATION NEEDED: trusted time-stamping (RFC 3161)
+
+\FloatBarrier
+\subsection{Comparison with the base paper and similar work}\label{sec:res-cmp}
+
+Table~\ref{tab:cmp} compares the proposed scheme with the values reported by the base paper~\cite{sanivarapu2022} and with our reproduction of it, and gives the improvement percentage for each metric. Higher-is-better metrics (PSNR, NCC, decodable cases) use $\frac{\text{New}-\text{Old}}{\text{Old}}\times100$; lower-is-better metrics (false acceptance, key material, time) use $\frac{\text{Old}-\text{New}}{\text{Old}}\times100$. A positive value is always an improvement.
+
+Two cautions apply to the reported values. First, the base paper does not state its cropping or rotation sizes, and gives its salt \& pepper density as 0.5, so those columns are not like-for-like. Second, our reproduction of its scheme reaches much lower NCC than reported under blur ($0.608$ vs $0.991$), rescaling ($0.604$ vs $0.996$) and rotation ($0.782$ vs $0.990$). We therefore treat the comparison with the reproduced scheme, run under identical conditions, as the primary one. Figure~\ref{fig:cmp} shows the NCC comparison and the decodability counts.
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Comparison and improvement percentage. Reported = values published in~\cite{sanivarapu2022} (means over its 12 images); A = the same scheme reproduced under our conditions. Form H: $\frac{\text{New}-\text{Old}}{\text{Old}}\times100$; form L: $\frac{\text{Old}-\text{New}}{\text{Old}}\times100$.}\label{tab:cmp}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lccccccc@{}}
+\toprule
+& & \multicolumn{2}{c}{vs base paper (reported)} & \multicolumn{2}{c}{vs base scheme (A, reproduced)} & & \\
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}
+Metric & Proposed & Old & Imp.\,\% & Old & Imp.\,\% & Form \\
+\midrule
+PSNR (dB) & 40.19 & 42.45 & $-5.32$ & 40.12 & $+0.18$ & H \\
+SSIM & 0.9907 & -- & -- & 0.9941 & $-0.35$ & H \\
+NCC, JPEG $Q=90$ & 0.9998 & 0.9933 & $+0.65$ & 0.9467 & $+5.61$ & H \\
+NCC, Gaussian $v=0.01$ & 0.9081 & 0.9900 & $-8.27$ & 0.9892 & $-8.20$ & H \\
+NCC, salt \& pepper & 0.9178 & 0.9841 & $-6.74$ & 0.9791 & $-6.26$ & H \\
+NCC, mean blur $3\times3$ & 0.9932 & 0.9909 & $+0.23$ & 0.6081 & $+63.31$ & H \\
+NCC, scaling $0.5\times$ & 0.9964 & 0.9957 & $+0.06$ & 0.6037 & $+65.05$ & H \\
+NCC, rotation $2^\circ$ & 0.5679 & 0.9898 & $-42.62$ & 0.7822 & $-27.40$ & H \\
+NCC, translation 2\,px & 0.9865 & 0.9781 & $+0.87$ & 0.9988 & $-1.23$ & H \\
+Decodable cases (of 132) & 103 & -- & -- & 79 & $+30.38$ & H \\
+False-ownership acceptance & 0\% & not evaluated & -- & 100\% & $+100.00$ & L \\
+Verifier key material (bytes) & 758 & -- & -- & 1{,}835{,}008 & $+99.96$ & L \\
+Embedding time (s) & 0.291 & -- & -- & 0.063 & $-360.9$ & L \\
+Extraction time (s) & 1.544 & -- & -- & 0.125 & $-1135.7$ & L \\
+\midrule
+\multicolumn{7}{@{}l}{\todo{Similar paper 2~\cite{TODO}: values and improvement \% to be added}} \\
+\multicolumn{7}{@{}l}{\todo{Similar paper 3~\cite{TODO}: values and improvement \% to be added}} \\
+\bottomrule
+\end{tabular}}
+\end{table}
+% Values: paper/out/robustness.csv (A), final_robustness_P.csv and final_imperceptibility_P.csv (proposed),
+% paper/base_paper.py (reported). Key material for A = U_W and V_W as float64 (2 x 256 x 256 x 8 B)
+% + the cover image (512 x 512 x 3 B); for the proposed scheme = the certificate JSON incl. signature.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{F10_comparison_base_paper}
+\caption{Top: mean NCC as reported by the base paper, for our reproduction of it, and for the proposed scheme. Bottom: images (of 12) whose QR code still decodes, which the base paper does not report.}
+\label{fig:cmp}
+\end{figure}
+
+\paragraph{Why the proposed scheme performs better.} Three design choices explain the gains. (i) Each module is read from the \emph{position} of $\sigma_1$ within a quantisation cell, not from an additive difference with the cover. A module flips only if an attack moves $\sigma_1$ by more than $\Delta/4\approx46$ from its cell centre. The low module BERs after blur (0.6\%), rescaling (0.3\%) and JPEG $Q=50$ (0.9\%) show that these low-pass operations rarely do so, whereas the base scheme's additive difference $(S^{*}-S_c)/\alpha$ amplifies every change by $1/\alpha=20$. (ii) Scrambling and cyclic repetition spread each module over the image, and the QR code's error correction (level H) absorbs the remaining module errors. This is why centre blanking, which destroys about 6\% of the blocks, still decodes on 12/12 images. (iii) Blind extraction removes the claimant's influence on the result, which is what defeats the false-ownership attack. It also removes the need to store the cover image and singular vectors.
+
+\paragraph{Where it does not.} The base scheme's extractor uses the QR code's own singular vectors, which carry most of the code's structure. This gives it strong immunity to additive noise, at the price of the ownership flaw. The blind scheme lacks this side information, so heavy Gaussian noise ($v=0.01$, attacked PSNR 20.2\,dB) and salt \& pepper reduce its decodability at 40\,dB. A lower PSNR operating point restores it (Section~\ref{sec:res-trade}). The proposed scheme is also slower: about $0.29$\,s to embed versus $0.06$\,s, and $1.54$\,s to extract versus $0.13$\,s. Extraction includes the hidden message, the certificate check and, after geometric attacks, the shift search. Neither scheme handles rotation.
+
+% =====================================================================
+\section{Conclusion}\label{sec:conclusion}
+
+We reproduced the DWT--SVD QR watermarking scheme of~\cite{sanivarapu2022} on its 12 test images and showed that it accepts false ownership claims on all of them. We then proposed a hybrid scheme with two layers in two channels. The blue channel carries a blind QIM watermark on block singular values, bound to the owner by an RSA-PSS-signed certificate. The green channel carries an AES-256/RSA-2048 encrypted message hidden by texture-ranked LSB. At the same image quality as the base scheme (40.19 vs 40.12\,dB), the proposed scheme rejects every false-ownership, forged-certificate and re-signed-certificate claim. Its watermark decodes on 103 of 132 attack--image cases against 79, and it delivers a confidential message that classical steganalysis underestimates by half.
+
+Expressed as ``how many times better'' (New/Old for higher-is-better and Old/New for lower-is-better metrics), against the base scheme reproduced under identical conditions:
+\begin{itemize}
+  \item decodable attack cases: $103/79 = \mathbf{1.30\times}$;
+  \item decodability after JPEG $Q=70$ and $Q=50$: $12/8=\mathbf{1.5\times}$; after $3\times3$ blur: $11/1=\mathbf{11\times}$; after $0.5\times$ rescaling: $11/2=\mathbf{5.5\times}$; after centre blanking: 12/12 versus 0/12 (ratio undefined);
+  \item mean NCC after blur: $0.9932/0.6081=\mathbf{1.63\times}$; after rescaling: $0.9964/0.6037=\mathbf{1.65\times}$; after JPEG $Q=90$: $0.9998/0.9467=1.06\times$;
+  \item verifier key material: $1{,}835{,}008/758\approx\mathbf{2421\times}$ smaller;
+  \item false-ownership acceptance: $100\%\rightarrow0\%$ (eliminated; ratio undefined);
+  \item PSNR: $40.19/40.12=1.00\times$ (equal by design); against the value reported by the base paper, $40.19/42.45=0.95\times$.
+\end{itemize}
+The proposed scheme is worse in three respects. Its decodability under Gaussian noise at $v=0.01$ is 0/12 against 12/12, and under salt \& pepper 9/12 against 12/12. Its embedding and extraction are $0.22\times$ and $0.08\times$ as fast as the base scheme's ($0.063/0.291$ and $0.125/1.544$).
+
+\paragraph{Future work.} Several directions are open, all tentative. (1) Geometric robustness: a synchronisation template or rotation-invariant features to survive rotation, which defeats both schemes. (2) Adaptive QIM steps per block, chosen from local texture to raise noise robustness without lowering PSNR. (3) A trusted time-stamping service for the certificate, to settle the overwrite attack. (4) A hidden layer that survives JPEG, for example by moving it to the DCT domain or using syndrome-trellis coding with a distortion-minimising cost function. (5) A full steganalysis study on BOSSbase~\cite{bas2011boss} with modern detectors. (6) Comparison with further published schemes, and evaluation on larger and higher-resolution image sets.
+
+% =====================================================================
+\begin{thebibliography}{99}
+
+\bibitem{sanivarapu2022}
+P.~V. Sanivarapu, K.~N.~V.~P.~S. Rajesh, K.~M. Hosny, and M.~M. Fouda,
+``Digital watermarking system for copyright protection and authentication of images using cryptographic techniques,''
+\emph{Applied Sciences}, vol.~12, no.~17, art.~8724, 2022, doi:10.3390/app12178724.
+
+\bibitem{liu2002svd}
+R.~Liu and T.~Tan,
+``An SVD-based watermarking scheme for protecting rightful ownership,''
+\emph{IEEE Transactions on Multimedia}, vol.~4, no.~1, pp.~121--128, 2002.
+
+\bibitem{zhang2005comments}
+X.-P. Zhang and K.~Li,
+``Comments on `An SVD-based watermarking scheme for protecting rightful ownership','',
+\emph{IEEE Transactions on Multimedia}, vol.~7, no.~3, pp.~593--594, 2005.
+
+\bibitem{pevny2010spam}
+T.~Pevn\'y, P.~Bas, and J.~Fridrich,
+``Steganalysis by subtractive pixel adjacency matrix,''
+\emph{IEEE Transactions on Information Forensics and Security}, vol.~5, no.~2, pp.~215--224, 2010.
+
+\bibitem{bas2011boss}
+P.~Bas, T.~Filler, and T.~Pevn\'y,
+```Break Our Steganographic System': The ins and outs of organizing BOSS,''
+in \emph{Information Hiding (IH 2011)}, LNCS vol.~6958, pp.~59--70, 2011.
+
+\bibitem{fips197}
+National Institute of Standards and Technology,
+``Advanced Encryption Standard (AES),''
+FIPS PUB 197, 2001.
+
+\bibitem{rfc8017}
+K.~Moriarty, B.~Kaliski, J.~Jonsson, and A.~Rusch,
+``PKCS \#1: RSA cryptography specifications version 2.2,''
+RFC 8017, 2016.
+
+\bibitem{may1976}
+R.~M. May,
+``Simple mathematical models with very complicated dynamics,''
+\emph{Nature}, vol.~261, pp.~459--467, 1976.
+
+\bibitem{TODO}
+\todo{CITATION NEEDED --- each use is marked with a ``CITATION NEEDED'' comment in the source naming the topic and a candidate reference.}
+
+\end{thebibliography}
+
+\end{document}
