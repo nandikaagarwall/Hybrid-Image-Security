@@ -184,4 +184,39 @@ ax[1].set_ylabel("QR decodable (of 12)"); ax[1].set_ylim(0, 13)
 ax[1].text(-0.45, 12.3, "base paper does not report decodability", fontsize=7, color="#6b6b66")
 ax[1].set_xticks(x); ax[1].set_xticklabels([a.replace(" ", "\n", 1) for a in atks], fontsize=7)
 fig.tight_layout(); save(fig, "F10_comparison_base_paper")
+
+# F11 what encryption does: plain vs scrambled QR, message bytes vs AES-256-CBC ciphertext,
+# each shown as a 256 x 256 image with its horizontal / vertical / diagonal adjacent-pixel scatter.
+# Same data as run_hidden_layer.py (Table 5): fixed demo key/IV, 64 KiB of message text.
+from Crypto.Cipher import AES
+from src import metrics as Mm
+qr_plain = generate_qr_code(TEXT); qr_scr, _ = chaotic_logistic_map_scramble(qr_plain, x0=X0, mu=MU)
+pt = (b"Confidential project record. " * 3000)[:65536]
+ct = AES.new(bytes(range(32)), AES.MODE_CBC, bytes(range(16))).encrypt(pt)
+cols = [("Plain QR watermark\n256 × 256 pixels", qr_plain, GREY),
+        ("Scrambled QR (logistic map)\n256 × 256 pixels", qr_scr, CP),
+        ("Secret message bytes\nshown as 256 × 256 image", np.frombuffer(pt, np.uint8).reshape(256, 256), GREY),
+        ("AES-256-CBC ciphertext\nshown as 256 × 256 image", np.frombuffer(ct, np.uint8).reshape(256, 256), CA)]
+fig, ax = plt.subplots(4, 4, figsize=(7.2, 7.6), gridspec_kw={"height_ratios": [1.15, 1, 1, 1]})
+jit = np.random.default_rng(5)
+for j, (t, im, c) in enumerate(cols):
+    a = ax[0, j]; a.imshow(im, cmap="gray", vmin=0, vmax=255, interpolation="nearest"); a.set_title(t, fontsize=7.5)
+    a.set_xticks([]); a.set_yticks([]); a.grid(False)
+    binary = len(np.unique(im)) <= 2
+    for i, (dn, (dy, dx)) in enumerate([("h", (0, 1)), ("v", (1, 0)), ("d", (1, 1))]):
+        rng = np.random.default_rng(0)                                  # the exact pairs metrics.corr_coeff uses
+        y = rng.integers(0, 256 - dy, 5000); x = rng.integers(0, 256 - dx, 5000)
+        p, q = im[y, x].astype(float), im[y + dy, x + dx].astype(float)
+        if binary:                                                      # 0/255 values: jitter so the 4 clusters are visible
+            p = p + jit.normal(0, 6, p.size); q = q + jit.normal(0, 6, q.size)
+        b = ax[i + 1, j]
+        b.scatter(p, q, s=1.2, color=c, alpha=0.35, linewidths=0, rasterized=True)
+        b.text(0.5, 0.5, f"r = {Mm.corr_coeff(im, dn):.4f}", transform=b.transAxes, va="center", ha="center", fontsize=7.5,
+               bbox=dict(fc="white", ec="none", alpha=0.85, pad=1.2))
+        b.set_xlim(-25, 280); b.set_ylim(-25, 280); b.set_xticks([0, 128, 255]); b.set_yticks([0, 128, 255])
+        if j == 0: b.set_ylabel({"h": "Horizontal", "v": "Vertical", "d": "Diagonal"}[dn] + "\nneighbour value", fontsize=8)
+        if i == 2: b.set_xlabel("pixel / byte value", fontsize=8)
+        if j: b.set_yticklabels([])
+        if i < 2: b.set_xticklabels([])
+fig.tight_layout(w_pad=0.5, h_pad=0.6); save(fig, "F11_encryption_correlation")
 print("figures ok")
